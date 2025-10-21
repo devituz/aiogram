@@ -6,6 +6,7 @@ WORKDIR /var/www/html/bot
 
 # Fayllarni konteynerga nusxalash
 COPY . .
+COPY web/database.py ../web/database.py
 
 # Kerakli kutubxonalarni o‘rnatish
 RUN pip install --no-cache-dir -r requirements.txt

@@ -18,6 +18,11 @@ from aiogram.types import (
 )
 from aiohttp import web
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+
 from web.database import (
     add_user,
     get_user_by_telegram_id,
