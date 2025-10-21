@@ -299,7 +299,7 @@ async def referral_handler(message: Message):
     text = (
         f"🎁 Sizning referal linkingiz:\n"
         f"<a href='{referral_link}'>{referral_link}</a>\n\n"
-        f"✅ Siz 5 tadan {referred_count} do‘stni taklif qildingiz!"
+        f"✅ Siz 5 tadan {referred_count} do‘stni taklif qildingiz!\n"
         f"🆔 Telegram ID: {user.telegram_id}\n"
         f"📱 Telefon raqam: {user.phone_number or 'Yo‘q'}\n"
         f"📊 Status: {user.status.value} \n"
@@ -316,7 +316,7 @@ async def start_send_message(message: Message, state: FSMContext):
     referred_count = get_referred_count(user_id)
 
     # Check if user has at least 5 referrals
-    if referred_count < 5:
+    if referred_count < 1:
         await message.answer(
             "⚠️  Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
             f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
