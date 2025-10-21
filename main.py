@@ -53,9 +53,8 @@ class AdminMessageState(StatesGroup):
     waiting_for_broadcast = State()
     waiting_for_single_message = State()
 
-# ==========================================================
+
 # 🔹 Obuna tekshirish
-# ==========================================================
 async def is_subscribed(user_id: int) -> bool:
     for ch in CHANNELS:
         if ch.startswith("@"):  # Telegram kanali bo'lsa
@@ -66,9 +65,7 @@ async def is_subscribed(user_id: int) -> bool:
             except Exception as e:
                 print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
                 return False
-        else:
-            # Web linklar uchun tekshirish qilinmaydi
-            continue
+        # Web linklar uchun tekshirish qilinmaydi
     return True
 
 
@@ -106,6 +103,7 @@ async def send_main_menu(chat_id: int):
 # ==========================================================
 # 🔹 Foydalanuvchi talablarini tekshirish
 
+# 🔹 Foydalanuvchi talablarini tekshirish
 async def check_user_requirements(message: Message) -> bool:
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
@@ -132,20 +130,31 @@ async def check_user_requirements(message: Message) -> bool:
 
     if not_subscribed_channels:
         buttons = []
-        for ch in CHANNELS:
+        telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
+        web_links = [ch for ch in CHANNELS if not ch.startswith("@")]
+
+        # Telegram kanallari uchun tugmalar
+        for ch in telegram_channels:
             buttons.append(
-                [InlineKeyboardButton(text="✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}") if ch.startswith("@") else
-                 InlineKeyboardButton(text="✅ Obuna bo‘lish", url=ch)]
+                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({ch})", url=f"https://t.me/{ch.strip('@')}")]
+            )
+
+        # Web linklar uchun tugmalar
+        for link in web_links:
+            buttons.append(
+                [InlineKeyboardButton(text=f"🔗 Saytni ko‘rish ({link})", url=link)]
             )
 
         # Faqat Telegram kanallari uchun tekshirish tugmasi
-        if any(ch.startswith("@") for ch in CHANNELS):
+        if telegram_channels:
             buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
+        # Foydalanuvchiga aniq xabar
+        web_message = "\n🔗 Iltimos, quyidagi saytga tashrif buyuring (tekshirilmaydi, lekin majburiydir):" if web_links else ""
         await message.answer(
-            "⚠️ Quyidagi kanallarga obuna bo‘ling yoki havolalarni tekshiring:",
+            f"⚠️ Quyidagi Telegram kanallarga obuna bo‘ling:{web_message}",
             reply_markup=keyboard
         )
         return False
@@ -165,9 +174,6 @@ async def check_user_requirements(message: Message) -> bool:
 
 
 
-# ==========================================================
-# 🔹 Handlers
-# ==========================================================
 @dp.message(CommandStart())
 async def start_handler(message: Message, command: CommandStart):
     user_id = message.from_user.id
@@ -214,7 +220,7 @@ async def contact_handler(message: Message):
     else:
         await check_user_requirements(message)
 
-# 🔹 Tekshirish tugmasi callback
+
 @dp.callback_query(F.data == "check_sub")
 async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
@@ -222,32 +228,42 @@ async def check_subscription(callback: CallbackQuery):
 
     # Telegram kanallari tekshiriladi
     not_subscribed = []
-    for ch in CHANNELS:
-        if ch.startswith("@"):
-            try:
-                member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
-                if member.status not in ["member", "administrator", "creator"]:
-                    not_subscribed.append(ch)
-            except Exception:
+    telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
+    for ch in telegram_channels:
+        try:
+            member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+            if member.status not in ["member", "administrator", "creator"]:
                 not_subscribed.append(ch)
+        except Exception:
+            not_subscribed.append(ch)
 
     # Agar Telegram kanaliga obuna bo'lmagan bo'lsa
     if not_subscribed:
         buttons = []
-        for ch in CHANNELS:
-            # Har bir kanal uchun tugma
+        for ch in telegram_channels:
             buttons.append(
                 [InlineKeyboardButton(
-                    text="✅ Obuna bo‘lish",
-                    url=f"https://t.me/{ch.strip('@')}" if ch.startswith("@") else ch
+                    text=f"✅ Obuna bo‘lish ({ch})",
+                    url=f"https://t.me/{ch.strip('@')}"
                 )]
             )
-        # Faqat Telegram kanallari mavjud bo'lsa, tekshirish tugmasi qo'shiladi
-        if any(ch.startswith("@") for ch in CHANNELS):
+        web_links = [ch for ch in CHANNELS if not ch.startswith("@")]
+        for link in web_links:
+            buttons.append(
+                [InlineKeyboardButton(
+                    text=f"🔗 Saytni ko‘rish ({link})",
+                    url=link
+                )]
+            )
+        if telegram_channels:
             buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-        await callback.message.answer("⚠️ Hali obuna bo‘lmagansiz!", reply_markup=keyboard)
+        web_message = "\n🔗 Iltimos, quyidagi saytga tashrif buyuring (tekshirilmaydi, lekin majburiydir):" if web_links else ""
+        await callback.message.answer(
+            f"⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!{web_message}",
+            reply_markup=keyboard
+        )
         return
 
     # Telefon raqami tekshiruvi
