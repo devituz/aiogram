@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /var/www/html
 
 # Fayllarni konteynerga nusxalash
-COPY . .
+COPY .. .
 
 # Kerakli kutubxonalarni o‘rnatish
 RUN pip install --no-cache-dir -r requirements.txt
