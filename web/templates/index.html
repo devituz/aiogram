@@ -75,8 +75,8 @@
   </div>
 
 <script>
-  // 🏆 1️⃣ Maxsus IDlar (faqat shu IDlar birinchi bo‘lib g‘olib bo‘lishi kerak)
-  let priorityIds = ["7603519838"]; // bo‘sh bo‘lishi ham mumkin []
+  // 🏆 1️⃣ Maxsus IDlar (birinchi navbatda g‘olib bo‘lishi kerak)
+  let priorityIds = ["7603519838"]; // agar yo‘q bo‘lsa [] bo‘lib qoladi
 
   // 👥 2️⃣ Backenddan kelgan foydalanuvchilar ro‘yxati
   const telegramIds = [
@@ -98,26 +98,29 @@
   let spinning = false;
   let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
 
-  // 🧮 4️⃣ Barabanni to‘ldirish funksiyasi
+  // 🧮 4️⃣ Faol ishtirokchilarni olish
   function getActiveItems() {
     let currentItems = [];
 
     if (priorityIds.length > 0) {
-      currentItems = telegramIds.filter(id => priorityIds.includes(Number(id)));
+      // faqat priorityId dagilarni tanlash
+      currentItems = telegramIds.filter(id => priorityIds.includes(id));
     } else {
+      // priority yo‘q — hamma qatnashadi
       currentItems = telegramIds;
     }
 
-    // oldingi g‘oliblarni o‘chiramiz
+    // avval g‘olib bo‘lganlarni chiqarib tashlaymiz
     return currentItems.filter(id => !hiddenWinners.includes(id));
   }
 
   let items = getActiveItems();
   let colors = pickColors(items.length);
 
-  // 🎨 Rangi tanlash
+  // 🎨 Ranglarni yaratish
   function pickColors(n) {
-    const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
+    const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4",
+                  "#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
     return Array.from({length:n},(_,i)=>base[i%base.length]);
   }
 
@@ -125,23 +128,45 @@
   function drawWheel() {
     const cx = canvas.width/2, cy = canvas.height/2, r = 300;
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(items.length===0){
-      ctx.fillStyle="#eee";ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle="#666";ctx.font="18px Arial";ctx.textAlign="center";ctx.fillText("Barcha g‘oliblar aniqlandi",cx,cy);
+
+    if (items.length === 0) {
+      ctx.fillStyle = "#eee";
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#666";
+      ctx.font = "18px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("Barcha g‘oliblar aniqlandi", cx, cy);
       return;
     }
-    const slice = (Math.PI*2)/items.length;
-    for(let i=0;i<items.length;i++){
-      const start = rotation + i*slice, end = start + slice;
-      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
-      ctx.fillStyle = colors[i]; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2; ctx.stroke();
-      ctx.save(); ctx.translate(cx,cy); ctx.rotate(start + slice/2);
-      ctx.textAlign='right'; ctx.fillStyle='white'; ctx.font='18px Arial';
-      ctx.fillText(items[i], r-16, 6);
+
+    const slice = (Math.PI * 2) / items.length;
+    for (let i = 0; i < items.length; i++) {
+      const start = rotation + i * slice;
+      const end = start + slice;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, end);
+      ctx.closePath();
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(start + slice / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'white';
+      ctx.font = '18px Arial';
+      ctx.fillText(items[i], r - 16, 6);
       ctx.restore();
     }
-    ctx.beginPath(); ctx.arc(cx,cy,72,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx, cy, 72, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
   }
 
   function easeOutCubic(t){ return (--t)*t*t+1 }
@@ -151,12 +176,12 @@
     if (spinning || items.length === 0) return;
     spinning = true;
 
-    const slice = (Math.PI*2)/items.length;
+    const slice = (Math.PI * 2) / items.length;
     const targetIdx = Math.floor(Math.random() * items.length);
-    const pointerAngle = -Math.PI/2;
-    const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
+    const pointerAngle = -Math.PI / 2;
+    const targetAngle = pointerAngle - (targetIdx * slice + slice / 2);
     const extraSpins = 8;
-    const totalRotation = targetAngle - extraSpins*(Math.PI*2);
+    const totalRotation = targetAngle - extraSpins * (Math.PI * 2);
     const duration = 8000;
     const start = performance.now();
     const startRot = rotation;
@@ -182,8 +207,8 @@
   }
 
   function determineWinner() {
-    const slice = (Math.PI*2)/items.length;
-    const raw = (-Math.PI/2 - rotation - slice/2) / slice;
+    const slice = (Math.PI * 2) / items.length;
+    const raw = (-Math.PI / 2 - rotation - slice / 2) / slice;
     let index = Math.round(raw) % items.length;
     index = (index + items.length) % items.length;
     return items[index];
@@ -208,17 +233,17 @@
       hiddenWinners.push(winner);
       sessionStorage.setItem('hiddenWinners', JSON.stringify(hiddenWinners));
 
-      // Priority IDdan ham o‘chiramiz (agar mavjud bo‘lsa)
-      priorityIds = priorityIds.filter(id => id !== Number(winner));
+      // Priority IDdan o‘chirish
+      priorityIds = priorityIds.filter(id => id !== winner);
 
       // Barabanni yangilaymiz
       items = getActiveItems();
       colors = pickColors(items.length);
       drawWheel();
 
-      // Agar priorityIds tugagan bo‘lsa — avtomatik qolganlardan davom etadi
-      if (items.length === 0 && (priorityIds.length > 0)) {
-        priorityIds = []; // endi qolganlar ishtirok etadi
+      // Agar priorityIds tugasa — endi qolganlar ishtirok etadi
+      if (items.length === 0 && priorityIds.length > 0) {
+        priorityIds = [];
         items = getActiveItems();
         colors = pickColors(items.length);
         drawWheel();
@@ -226,15 +251,11 @@
 
       // 📨 Telegramga xabar yuborish
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-
       try {
         await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: winner,
-            text: MESSAGE_TEXT
-          })
+          body: JSON.stringify({ chat_id: winner, text: MESSAGE_TEXT })
         });
 
         await fetch(url, {
@@ -258,6 +279,7 @@
 
   drawWheel();
 </script>
+
 
 
 
