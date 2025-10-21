@@ -93,7 +93,7 @@ async def send_main_menu(chat_id: int):
         ],
         resize_keyboard=True
     )
-    await bot.send_message(chat_id, "\u200b", reply_markup=keyboard)
+    await bot.send_message(chat_id, "📋 Asosiy menyu:", reply_markup=keyboard)
 
 # ==========================================================
 # 🔹 Foydalanuvchi talablarini tekshirish
