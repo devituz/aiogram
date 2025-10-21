@@ -136,13 +136,15 @@ async def check_user_requirements(message: Message) -> bool:
         # Telegram kanallari uchun tugmalar
         for ch in telegram_channels:
             buttons.append(
-                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({ch})", url=f"https://t.me/{ch.strip('@')}")]
+                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({ch})", url=f"https://t.me/{ch.strip('@')}")]
+                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")]
             )
 
         # Web linklar uchun tugmalar
         for link in web_links:
             buttons.append(
-                [InlineKeyboardButton(text=f"🔗 Saytni ko‘rish ({link})", url=link)]
+                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=link)]
+                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({link})", url=link)]
             )
 
         # Faqat Telegram kanallari uchun tekshirish tugmasi
@@ -152,7 +154,7 @@ async def check_user_requirements(message: Message) -> bool:
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
         # Foydalanuvchiga aniq xabar
-        web_message = "\n🔗 Iltimos, quyidagi saytga tashrif buyuring (tekshirilmaydi, lekin majburiydir):" if web_links else ""
+        web_message = "\n🔗 aytga tashrif buyurib Kick platformamizga buyuring majburiydir!" if web_links else ""
         await message.answer(
             f"⚠️ Quyidagi Telegram kanallarga obuna bo‘ling:{web_message}",
             reply_markup=keyboard
@@ -243,7 +245,8 @@ async def check_subscription(callback: CallbackQuery):
         for ch in telegram_channels:
             buttons.append(
                 [InlineKeyboardButton(
-                    text=f"✅ Obuna bo‘lish ({ch})",
+                    # text=f"✅ Telegram kanal({ch})",
+                    text=f"✅ Obuna bo'lish",
                     url=f"https://t.me/{ch.strip('@')}"
                 )]
             )
@@ -251,7 +254,8 @@ async def check_subscription(callback: CallbackQuery):
         for link in web_links:
             buttons.append(
                 [InlineKeyboardButton(
-                    text=f"🔗 Saytni ko‘rish ({link})",
+                    # text=f"🔗 Cick ({link})",
+                    text=f"✅ Obuna bo'lish",
                     url=link
                 )]
             )
@@ -259,7 +263,7 @@ async def check_subscription(callback: CallbackQuery):
             buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-        web_message = "\n🔗 Iltimos, quyidagi saytga tashrif buyuring (tekshirilmaydi, lekin majburiydir):" if web_links else ""
+        web_message = "\n🔗 Saytga tashrif buyurib Kick platformamizga buyuring majburiydir!" if web_links else ""
         await callback.message.answer(
             f"⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!{web_message}",
             reply_markup=keyboard
