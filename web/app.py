@@ -5,17 +5,19 @@ import enum
 
 
 
-DATABASE_URL = "sqlite:///../database.db"
-engine = create_engine(DATABASE_URL)
+# 🔹 Database setup
+DATABASE_URL = "sqlite:///database.db"
 Base = declarative_base()
 
 
+# 🔹 User status
 class UserStatus(enum.Enum):
     new = "new"
     accept = "accept"
     rejected = "rejected"
 
 
+# 🔹 Telegram foydalanuvchilari
 class TelegramUser(Base):
     __tablename__ = "telegram_users"
 
