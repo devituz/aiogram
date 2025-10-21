@@ -14,11 +14,11 @@ from aiogram.types import (
     ReplyKeyboardRemove,
     InputMediaPhoto
 )
-
+from aiohttp import web
 from database import (
     add_user,
     get_user_by_telegram_id,
-    get_all_users,  # Yangi funksiya: barcha foydalanuvchilarni olish
+    get_all_users,
     update_user_phone,
     add_referral,
     update_referral_subscribed,
@@ -31,6 +31,10 @@ TOKEN = "7548864714:AAFZklf5PYSSGV_qWula7-SnebSxgeBrDTA"
 ADMIN_ID = 7321341340  # Admin Telegram ID
 CHANNELS = ["@shohbozbekuz"]
 CHANNEL_POSTS = {"@shohbozbekuz": [3320]}
+WEBHOOK_PATH = "/webhook"  # Webhook endpoint
+WEBHOOK_URL = "https://winproline.ru/webhook"  # Replace with your actual domain
+WEBAPP_HOST = "0.0.0.0"  # Listen on all interfaces
+WEBAPP_PORT = 8443  # Internal port for webhook server
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())  # FSM storage
@@ -42,9 +46,9 @@ class SendMessageState(StatesGroup):
     waiting_for_photos = State()
 
 class AdminMessageState(StatesGroup):
-    waiting_for_message = State()  # Admin xabar yuborish uchun holat (bitta userga)
-    waiting_for_broadcast = State()  # Admin barcha foydalanuvchilarga xabar yuborish
-    waiting_for_single_message = State()  # Ma'lum bir foydalanuvchiga xabar yuborish
+    waiting_for_message = State()
+    waiting_for_broadcast = State()
+    waiting_for_single_message = State()
 
 # ==========================================================
 # 🔹 Obuna tekshirish
@@ -106,7 +110,6 @@ async def check_user_requirements(message: Message):
         )
         user = get_user_by_telegram_id(user_id)
 
-    # Obuna tekshirish
     if not await is_subscribed(user_id):
         buttons = [[InlineKeyboardButton(text=f"🔗 {ch}", url=f"https://t.me/{ch.strip('@')}")] for ch in CHANNELS]
         buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
@@ -114,7 +117,6 @@ async def check_user_requirements(message: Message):
         await message.answer("⚠️ Quyidagi kanallarga obuna bo‘ling:", reply_markup=keyboard)
         return False
 
-    # Telefon raqami tekshirish
     if not user.phone_number:
         keyboard = ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="📞 Telefon raqamni yuborish", request_contact=True)]],
@@ -128,12 +130,12 @@ async def check_user_requirements(message: Message):
     return True
 
 # ==========================================================
-# 🔹 /start handler (referral bilan)
+# 🔹 Handlers
 # ==========================================================
 @dp.message(CommandStart())
 async def start_handler(message: Message, command: CommandStart):
     user_id = message.from_user.id
-    start_arg = command.args  # /start 12345
+    start_arg = command.args
 
     user = get_user_by_telegram_id(user_id)
     referred_by_id = None
@@ -156,19 +158,13 @@ async def start_handler(message: Message, command: CommandStart):
             add_referral(telegram_id=user_id, referred_by_id=referred_by_id)
 
     if await check_user_requirements(message):
-        await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
+        await send_all_channel_posts(message.chat.id)
 
-# ==========================================================
-# 🔹 /shartlar handler
-# ==========================================================
 @dp.message(Command("shartlar"))
 async def shartlar_handler(message: Message):
     if await check_user_requirements(message):
-        await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
+        await send_all_channel_posts(message.chat.id)
 
-# ==========================================================
-# 🔹 Telefon raqam yuborish
-# ==========================================================
 @dp.message(F.contact)
 async def contact_handler(message: Message):
     phone = message.contact.phone_number
@@ -180,11 +176,8 @@ async def contact_handler(message: Message):
         await message.answer("✅ Telefon raqamingiz saqlandi!", reply_markup=ReplyKeyboardRemove())
         await send_all_channel_posts(message.chat.id)
     else:
-        await check_user_requirements(message)  # Obuna bo‘lmagan bo‘lsa, qayta tekshirish
+        await check_user_requirements(message)
 
-# ==========================================================
-# 🔹 Callback — obuna tekshirish
-# ==========================================================
 @dp.callback_query(F.data == "check_sub")
 async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
@@ -210,17 +203,14 @@ async def check_subscription(callback: CallbackQuery):
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
 
-# ==========================================================
-# 🔹 Referral handler
-# ==========================================================
 @dp.message(F.text == "🎁 Referal")
 async def referral_handler(message: Message):
     if not await check_user_requirements(message):
-        return  # Agar shartlar bajarilmagan bo‘lsa, hech narsa qilmaydi
+        return
 
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
-    referral_link = f"https://t.me/devit_gitbot?start={user_id}"  # Bot username
+    referral_link = f"https://t.me/devit_gitbot?start={user_id}"
     referred_count = get_referred_count(user_id)
 
     text = (
@@ -233,13 +223,10 @@ async def referral_handler(message: Message):
     )
     await message.answer(text=text, parse_mode="HTML")
 
-# ==========================================================
-# 🔹 Xabar yuborish
-# ==========================================================
 @dp.message(F.text == "✉️ Xabar yuborish")
 async def start_send_message(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
-        return  # Agar shartlar bajarilmagan bo‘lsa, hech narsa qilmaydi
+        return
 
     await message.answer(
         "📸 Iltimos, faqat rasm (screenshot) va unga izoh (caption) yuboring.\n\nTayyor bo‘lgach, '✅ Yuborish' tugmasini bosing.",
@@ -251,14 +238,11 @@ async def start_send_message(message: Message, state: FSMContext):
     await state.set_state(SendMessageState.waiting_for_photos)
     await state.update_data(photos=[])
 
-# ==========================================================
-# 🔹 Rasm va caption qabul qilish
-# ==========================================================
 @dp.message(SendMessageState.waiting_for_photos, F.photo)
 async def photo_handler(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
         await state.clear()
-        return  # Agar shartlar bajarilmagan bo‘lsa, holatni tozalaydi va qaytaradi
+        return
 
     data = await state.get_data()
     photos = data.get("photos", [])
@@ -267,26 +251,20 @@ async def photo_handler(message: Message, state: FSMContext):
     await state.update_data(photos=photos)
     await message.answer(f"📸 {len(photos)}-rasm qabul qilindi.")
 
-# ==========================================================
-# 🔹 Oddiy matn xabari uchun ogohlantirish
-# ==========================================================
 @dp.message(SendMessageState.waiting_for_photos, F.text & ~F.text.in_(["✅ Yuborish", "❌ Bekor qilish"]))
 async def text_message_warning(message: Message):
     if not await check_user_requirements(message):
-        return  # Agar shartlar bajarilmagan bo‘lsa, hech narsa qilmaydi
+        return
 
     await message.answer(
         "⚠️ Faqat rasm va unga izoh (caption) yuborishingiz mumkin! Iltimos, rasm yuboring."
     )
 
-# ==========================================================
-# 🔹 Yuborish — barcha rasm va izohlar bilan
-# ==========================================================
 @dp.message(SendMessageState.waiting_for_photos, F.text == "✅ Yuborish")
 async def send_to_admin(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
         await state.clear()
-        return  # Agar shartlar bajarilmagan bo‘lsa, holatni tozalaydi va qaytaradi
+        return
 
     data = await state.get_data()
     photos = data.get("photos", [])
@@ -311,7 +289,6 @@ async def send_to_admin(message: Message, state: FSMContext):
         f"✏️ <b>Izohlar:</b>\n{izohlar}"
     )
 
-    # Inline keyboard qo'shish
     inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"accept_user_{user_id}"),
@@ -327,7 +304,6 @@ async def send_to_admin(message: Message, state: FSMContext):
         else:
             media_group.append(InputMediaPhoto(media=photo["file_id"]))
 
-    # Media group va inline keyboard yuborish
     await bot.send_media_group(chat_id=ADMIN_ID, media=media_group)
     await bot.send_message(chat_id=ADMIN_ID, text="Amallar:", reply_markup=inline_keyboard)
 
@@ -335,9 +311,6 @@ async def send_to_admin(message: Message, state: FSMContext):
     await send_main_menu(message.chat.id)
     await state.clear()
 
-# ==========================================================
-# 🔹 Admin callback handlerlari
-# ==========================================================
 @dp.callback_query(F.data.startswith("accept_user_"))
 async def accept_user_callback(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
@@ -348,8 +321,7 @@ async def accept_user_callback(callback: CallbackQuery):
     update_user_status(user_id, "accept")
     user = get_user_by_telegram_id(user_id)
     await callback.answer("✅ Foydalanuvchi qabul qilindi!")
-    await callback.message.edit_reply_markup(reply_markup=None)  # Tugmalarni o'chirish
-    # Foydalanuvchiga xabar yuborish
+    await callback.message.edit_reply_markup(reply_markup=None)
     await bot.send_message(
         chat_id=user_id,
         text=f"Admindan sizga yangi xabar\nXabari: Qabul qilindi\nStatus: {user.status.value}"
@@ -365,8 +337,7 @@ async def reject_user_callback(callback: CallbackQuery):
     update_user_status(user_id, "rejected")
     user = get_user_by_telegram_id(user_id)
     await callback.answer("❌ Foydalanuvchi rad etildi!")
-    await callback.message.edit_reply_markup(reply_markup=None)  # Tugmalarni o'chirish
-    # Foydalanuvchiga xabar yuborish
+    await callback.message.edit_reply_markup(reply_markup=None)
     await bot.send_message(
         chat_id=user_id,
         text=f"Admindan sizga yangi xabar\nXabari: Rad etildi\nStatus: {user.status.value}"
@@ -384,9 +355,6 @@ async def message_user_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("✉️ Foydalanuvchiga yuboriladigan xabarni yozing:")
     await callback.answer("Xabar yuborish rejimi yoqildi.")
 
-# ==========================================================
-# 🔹 Admin xabar yuborish (bitta foydalanuvchiga)
-# ==========================================================
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
@@ -402,7 +370,6 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
     user = get_user_by_telegram_id(target_user_id)
     try:
-        # Har qanday turdagi xabar yuborish (matn, rasm, fayl va h.k.)
         if message.text:
             await bot.send_message(
                 chat_id=target_user_id,
@@ -443,9 +410,6 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
     await state.clear()
 
-# ==========================================================
-# 🔹 Admin barcha foydalanuvchilarga xabar yuborish (/broadcast)
-# ==========================================================
 @dp.message(Command("broadcast"))
 async def broadcast_handler(message: Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
@@ -462,7 +426,7 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
         return
 
-    users = get_all_users()  # Barcha foydalanuvchilarni olish
+    users = get_all_users()
     if not users:
         await message.answer("❌ Ma'lumotlar bazasida foydalanuvchilar topilmadi.")
         await state.clear()
@@ -507,7 +471,7 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
                 await state.clear()
                 return
             success_count += 1
-            await asyncio.sleep(0.05)  # Telegram API cheklovlaridan qochish uchun pauza
+            await asyncio.sleep(0.05)
         except Exception as e:
             error_count += 1
             print(f"❌ Xabar yuborishda xato (user {user.telegram_id}): {e}")
@@ -519,9 +483,6 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
     )
     await state.clear()
 
-# ==========================================================
-# 🔹 Admin ma'lum bir foydalanuvchiga xabar yuborish (/send_to_user)
-# ==========================================================
 @dp.message(Command("send_to_user"))
 async def send_to_user_handler(message: Message, state: FSMContext):
     if message.from_user.id != ADMIN_ID:
@@ -602,32 +563,55 @@ async def single_message_handler(message: Message, state: FSMContext):
 
     await state.clear()
 
-# ==========================================================
-# 🔹 Bekor qilish
-# ==========================================================
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
 async def cancel_send(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
         await state.clear()
-        return  # Agar shartlar bajarilmagan bo‘lsa, holatni tozalaydi va qaytaradi
+        return
 
     await message.answer("❌ Xabar yuborish bekor qilindi.", reply_markup=ReplyKeyboardRemove())
     await send_main_menu(message.chat.id)
     await state.clear()
 
-# ==========================================================
-# 🔹 Har qanday boshqa xabar
-# ==========================================================
 @dp.message()
 async def all_message_handler(message: Message):
-    await check_user_requirements(message)  # Har bir xabar uchun tekshirish
+    await check_user_requirements(message)
 
 # ==========================================================
-# 🔹 Botni ishga tushirish
+# 🔹 Webhook server setup
+# ==========================================================
+async def handle_webhook(request):
+    update = await request.json()
+    await dp.feed_raw_update(bot=bot, update=update)
+    return web.Response()
+
+async def on_startup():
+    print("🤖 Bot ishga tushdi...")
+    await bot.delete_webhook()
+    await bot.set_webhook(url=WEBHOOK_URL)
+    print(f"✅ Webhook set to {WEBHOOK_URL}")
+
+async def on_shutdown():
+    print("🤖 Bot to‘xtatilmoqda...")
+    await bot.delete_webhook()
+    await bot.session.close()
+
+# ==========================================================
+# 🔹 Main function for webhook
 # ==========================================================
 async def main():
-    print("🤖 Bot ishga tushdi...")
-    await dp.start_polling(bot)
+    app = web.Application()
+    app.router.add_post(WEBHOOK_PATH, handle_webhook)
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, WEBAPP_HOST, WEBAPP_PORT)
+    await site.start()
+    print(f"🚀 Webhook server running at {WEBAPP_HOST}:{WEBAPP_PORT}")
+
+    await asyncio.Event().wait()
 
 if __name__ == "__main__":
     asyncio.run(main())

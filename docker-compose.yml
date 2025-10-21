@@ -8,4 +8,6 @@ services:
     volumes:
       - ./:/var/www/html            # Loyihani konteyner ichiga ulaydi
     working_dir: /var/www/html
-    command: python main.py         # Botni ishga tushiradi
+    ports:
+      - "8443:8443"                # Expose port 8443 for webhook
+    command: python main.py        # Botni ishga tushiradi
