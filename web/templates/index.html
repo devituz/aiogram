@@ -6,20 +6,62 @@
   <title>Konkurs Baraban — Telegram IDlar</title>
   <style>
     :root{--size:640px}
-    html,body{height:100%;margin:0;padding:0;background:linear-gradient(180deg,#f3f5fb,#eef2f8);font-family:Inter,Roboto,Arial,sans-serif;display:flex;align-items:center;justify-content:center}
-    .wheel-wrap{display:flex;flex-direction:column;align-items:center;gap:18px;background:white;padding:24px;border-radius:16px;box-shadow:0 6px 20px rgba(20,30,60,0.1)}
+    html,body{
+      height:100%;margin:0;padding:0;
+      background:linear-gradient(180deg,#f3f5fb,#eef2f8);
+      font-family:Inter,Roboto,Arial,sans-serif;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .wheel-wrap{
+      display:flex;flex-direction:column;align-items:center;gap:18px;
+      background:white;padding:24px;border-radius:16px;
+      box-shadow:0 6px 20px rgba(20,30,60,0.1);
+    }
     .wheel-stage{position:relative;width:var(--size);height:var(--size)}
     canvas#wheel{width:100%;height:100%;border-radius:50%;display:block}
     .center-btn{
       position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-      width:120px;height:120px;border-radius:50%;background:linear-gradient(180deg,#fff,#f0f6ff);
+      width:120px;height:120px;border-radius:50%;
+      background:linear-gradient(180deg,#fff,#f0f6ff);
       box-shadow:inset 0 2px 6px rgba(255,255,255,.7),0 6px 18px rgba(10,30,60,.12);
-      display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#333;cursor:pointer;user-select:none;transition:transform .15s;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;font-size:20px;color:#333;
+      cursor:pointer;user-select:none;transition:transform .15s;
     }
     .center-btn:active{transform:translate(-50%,-50%) scale(0.95);}
-    .pointer{position:absolute;left:calc(50% - 14px);top:-8px;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:32px solid #444;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2))}
-    .winner{font-weight:700;font-size:18px;padding:12px 22px;border-radius:10px;background:linear-gradient(90deg,#eef2ff,#fff);text-align:center}
-    @media (max-width:700px){:root{--size:360px}.center-btn{width:90px;height:90px;font-size:16px}}
+    .pointer{
+      position:absolute;left:calc(50% - 14px);top:-8px;width:0;height:0;
+      border-left:14px solid transparent;border-right:14px solid transparent;
+      border-bottom:32px solid #444;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2))
+    }
+    @media (max-width:700px){
+      :root{--size:360px}
+      .center-btn{width:90px;height:90px;font-size:16px}
+    }
+
+    /* === Modal dizayni === */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,0.4);
+      display:flex;align-items:center;justify-content:center;
+      z-index:1000;backdrop-filter:blur(2px);
+      animation:fadeIn .3s ease forwards;
+    }
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .modal{
+      background:white;padding:30px 26px;border-radius:14px;
+      box-shadow:0 10px 25px rgba(0,0,0,0.2);
+      text-align:center;max-width:320px;width:100%;
+      animation:popIn .25s ease forwards;
+    }
+    @keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal h2{margin:0 0 12px 0;font-size:22px;color:#111}
+    .modal p{font-size:18px;font-weight:600;margin:0 0 20px 0;color:#1d4ed8}
+    .modal button{
+      background:#2563eb;color:white;border:none;
+      padding:10px 20px;border-radius:8px;font-weight:600;
+      cursor:pointer;font-size:15px;
+    }
+    .modal button:hover{background:#1d4ed8}
   </style>
 </head>
 <body>
@@ -29,7 +71,6 @@
       <canvas id="wheel" width="640" height="640"></canvas>
       <div id="spinBtn" class="center-btn">SPIN</div>
     </div>
-    <div id="winner" class="winner" style="display:none"></div>
   </div>
 
   <script>
@@ -43,20 +84,19 @@
     const canvas = document.getElementById('wheel');
     const ctx = canvas.getContext('2d');
     const spinBtn = document.getElementById('spinBtn');
-    const winnerEl = document.getElementById('winner');
 
     let items = telegramIds.filter(Boolean);
     let rotation = 0;
     let spinning = false;
 
     function pickColors(n){
-      const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
+      const base=["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
       return Array.from({length:n},(_,i)=>base[i%base.length]);
     }
-    const colors = pickColors(items.length);
+    let colors = pickColors(items.length);
 
     function drawWheel(){
-      const cx=canvas.width/2, cy=canvas.height/2, r=300;
+      const cx=canvas.width/2,cy=canvas.height/2,r=300;
       ctx.clearRect(0,0,canvas.width,canvas.height);
       if(items.length===0){
         ctx.fillStyle="#eee";ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
@@ -65,29 +105,28 @@
       }
       const slice=(Math.PI*2)/items.length;
       for(let i=0;i<items.length;i++){
-        const start=rotation+i*slice, end=start+slice;
+        const start=rotation+i*slice,end=start+slice;
         ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,end);ctx.closePath();
-        ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=2;ctx.stroke();
+        ctx.fillStyle=colors[i];ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.15)';
+        ctx.lineWidth=2;ctx.stroke();
         ctx.save();ctx.translate(cx,cy);ctx.rotate(start+slice/2);
-        ctx.textAlign='right';ctx.fillStyle='white';ctx.font='18px Arial';ctx.fillText(items[i],r-16,6);
-        ctx.restore();
+        ctx.textAlign='right';ctx.fillStyle='white';ctx.font='18px Arial';
+        ctx.fillText(items[i],r-16,6);ctx.restore();
       }
       ctx.beginPath();ctx.arc(cx,cy,72,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
     }
 
-    function easeOutCubic(t){ return (--t)*t*t+1 }
+    function easeOutCubic(t){return (--t)*t*t+1}
 
     async function spinRandom(){
       if(spinning || items.length===0) return;
-      spinning=true; winnerEl.style.display='none';
-
+      spinning=true;
       const slice=(Math.PI*2)/items.length;
       const targetIdx=Math.floor(Math.random()*items.length);
       const pointerAngle=-Math.PI/2;
       const targetAngle=pointerAngle - (targetIdx*slice + slice/2);
-      const extraSpins=8; // nechta to‘liq aylanish
+      const extraSpins=8;
       const totalRotation=targetAngle - extraSpins*(Math.PI*2);
-
       const duration=30000; // 30 soniya
       const start=performance.now();
       const startRot=rotation;
@@ -96,12 +135,13 @@
         function frame(now){
           const t=Math.min(1,(now-start)/duration);
           const eased=easeOutCubic(t);
-          rotation=startRot + (totalRotation-startRot)*eased;
+          rotation=startRot+(totalRotation-startRot)*eased;
           drawWheel();
           if(t<1){requestAnimationFrame(frame);}
           else{
             spinning=false;
-            determineWinner();
+            const winner=determineWinner();
+            showWinnerModal(winner);
             resolve();
           }
         }
@@ -114,10 +154,23 @@
       const raw=(-Math.PI/2 - rotation - slice/2)/slice;
       let index=Math.round(raw)%items.length;
       index=(index+items.length)%items.length;
-      const winner=items[index];
-      winnerEl.style.display='block';
-      winnerEl.textContent="G‘OLIB: "+winner;
-      winnerEl.animate([{transform:'scale(1)'},{transform:'scale(1.08)'},{transform:'scale(1)'}],{duration:800,iterations:1});
+      return items[index];
+    }
+
+    function showWinnerModal(winner){
+      const overlay=document.createElement('div');
+      overlay.className='modal-overlay';
+      overlay.innerHTML=`
+        <div class="modal">
+          <h2>🎉 G‘olib aniqlangandi!</h2>
+          <p>${winner}</p>
+          <button id="okBtn">OK</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      document.getElementById('okBtn').addEventListener('click',()=>{
+        overlay.remove();
+      });
     }
 
     spinBtn.addEventListener('click',()=>{ if(!spinning) spinRandom(); });
