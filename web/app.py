@@ -7,7 +7,7 @@ import enum
 # 🔹 Other dependencies: aiogram==3.13.1, SQLAlchemy==2.0.25, aiohttp==3.10.5
 
 # 🔹 Database setup
-DATABASE_URL = "sqlite:///../database.db"
+DATABASE_URL = "sqlite:///database.db"
 Base = declarative_base()
 
 
