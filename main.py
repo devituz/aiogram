@@ -139,7 +139,7 @@ async def check_user_requirements(message: Message) -> bool:
             if ch.startswith("@"):  # Telegram kanali
                 buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")])
             else:  # Web link
-                buttons.append([InlineKeyboardButton(text=f"🔗 {ch}", url=ch)])
+                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=ch)])
 
         # Tekshirish tugmasi
         buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
@@ -215,13 +215,31 @@ async def contact_handler(message: Message):
     else:
         await check_user_requirements(message)
 
+# 🔹 Tekshirish tugmasi callback
 @dp.callback_query(F.data == "check_sub")
 async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     chat_id = callback.message.chat.id
 
-    if not await is_subscribed(user_id):
-        buttons = [[InlineKeyboardButton(text=f"🔗 {ch}", url=f"https://t.me/{ch.strip('@')}")] for ch in CHANNELS]
+    not_subscribed = []
+    for ch in CHANNELS:
+        if ch.startswith("@"):
+            try:
+                member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+                if member.status not in ["member", "administrator", "creator"]:
+                    not_subscribed.append(ch)
+            except Exception:
+                not_subscribed.append(ch)
+        else:
+            not_subscribed.append(ch)  # Web linklar ham “obuna bo‘lish kerak”
+
+    if not_subscribed:
+        buttons = []
+        for ch in CHANNELS:
+            if ch.startswith("@"):
+                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")])
+            else:
+                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=ch)])
         buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
         await callback.message.answer("⚠️ Hali obuna bo‘lmagansiz!", reply_markup=keyboard)
