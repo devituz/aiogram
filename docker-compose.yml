@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  bot:
+    build: .                        # Dockerfile shu papkada joylashgan
+    container_name: aiogram_bot
+    restart: always
+    volumes:
+      - ./:/var/www/html            # Loyihani konteyner ichiga ulaydi
+    working_dir: /var/www/html
+    command: python main.py         # Botni ishga tushiradi

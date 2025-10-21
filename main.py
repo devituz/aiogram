@@ -18,6 +18,7 @@ from aiogram.types import (
 from database import (
     add_user,
     get_user_by_telegram_id,
+    get_all_users,  # Yangi funksiya: barcha foydalanuvchilarni olish
     update_user_phone,
     add_referral,
     update_referral_subscribed,
@@ -25,6 +26,7 @@ from database import (
     update_user_status
 )
 
+# 🔹 Bot sozlamalari
 TOKEN = "7548864714:AAFZklf5PYSSGV_qWula7-SnebSxgeBrDTA"
 ADMIN_ID = 7321341340  # Admin Telegram ID
 CHANNELS = ["@shohbozbekuz"]
@@ -33,17 +35,16 @@ CHANNEL_POSTS = {"@shohbozbekuz": [3320]}
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())  # FSM storage
 
-
 # ==========================================================
 # 🔹 FSM holatlari
 # ==========================================================
 class SendMessageState(StatesGroup):
     waiting_for_photos = State()
 
-
 class AdminMessageState(StatesGroup):
-    waiting_for_message = State()  # Admin xabar yuborish uchun holat
-
+    waiting_for_message = State()  # Admin xabar yuborish uchun holat (bitta userga)
+    waiting_for_broadcast = State()  # Admin barcha foydalanuvchilarga xabar yuborish
+    waiting_for_single_message = State()  # Ma'lum bir foydalanuvchiga xabar yuborish
 
 # ==========================================================
 # 🔹 Obuna tekshirish
@@ -58,7 +59,6 @@ async def is_subscribed(user_id):
             print(f"❌ Obuna tekshirishda xato: {e}")
             return False
     return True
-
 
 # ==========================================================
 # 🔹 Kanal postlarini yuborish
@@ -79,7 +79,6 @@ async def send_all_channel_posts(chat_id: int):
     except Exception as e:
         print(f"❌ send_all_channel_posts xatosi: {e}")
 
-
 # ==========================================================
 # 🔹 Asosiy menyu
 # ==========================================================
@@ -91,7 +90,6 @@ async def send_main_menu(chat_id: int):
         resize_keyboard=True
     )
     await bot.send_message(chat_id, "📋 Asosiy menyu:", reply_markup=keyboard)
-
 
 # ==========================================================
 # 🔹 Foydalanuvchi talablarini tekshirish
@@ -129,7 +127,6 @@ async def check_user_requirements(message: Message):
     update_referral_subscribed(telegram_id=user_id, status=True)
     return True
 
-
 # ==========================================================
 # 🔹 /start handler (referral bilan)
 # ==========================================================
@@ -161,7 +158,6 @@ async def start_handler(message: Message, command: CommandStart):
     if await check_user_requirements(message):
         await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
 
-
 # ==========================================================
 # 🔹 /shartlar handler
 # ==========================================================
@@ -169,7 +165,6 @@ async def start_handler(message: Message, command: CommandStart):
 async def shartlar_handler(message: Message):
     if await check_user_requirements(message):
         await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
-
 
 # ==========================================================
 # 🔹 Telefon raqam yuborish
@@ -186,7 +181,6 @@ async def contact_handler(message: Message):
         await send_all_channel_posts(message.chat.id)
     else:
         await check_user_requirements(message)  # Obuna bo‘lmagan bo‘lsa, qayta tekshirish
-
 
 # ==========================================================
 # 🔹 Callback — obuna tekshirish
@@ -216,7 +210,6 @@ async def check_subscription(callback: CallbackQuery):
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
 
-
 # ==========================================================
 # 🔹 Referral handler
 # ==========================================================
@@ -240,7 +233,6 @@ async def referral_handler(message: Message):
     )
     await message.answer(text=text, parse_mode="HTML")
 
-
 # ==========================================================
 # 🔹 Xabar yuborish
 # ==========================================================
@@ -259,7 +251,6 @@ async def start_send_message(message: Message, state: FSMContext):
     await state.set_state(SendMessageState.waiting_for_photos)
     await state.update_data(photos=[])
 
-
 # ==========================================================
 # 🔹 Rasm va caption qabul qilish
 # ==========================================================
@@ -276,7 +267,6 @@ async def photo_handler(message: Message, state: FSMContext):
     await state.update_data(photos=photos)
     await message.answer(f"📸 {len(photos)}-rasm qabul qilindi.")
 
-
 # ==========================================================
 # 🔹 Oddiy matn xabari uchun ogohlantirish
 # ==========================================================
@@ -288,7 +278,6 @@ async def text_message_warning(message: Message):
     await message.answer(
         "⚠️ Faqat rasm va unga izoh (caption) yuborishingiz mumkin! Iltimos, rasm yuboring."
     )
-
 
 # ==========================================================
 # 🔹 Yuborish — barcha rasm va izohlar bilan
@@ -309,7 +298,7 @@ async def send_to_admin(message: Message, state: FSMContext):
         await message.answer("⚠️ Hech qanday rasm yuborilmadi.")
         return
 
-    izohlar = "\n".join([f"{i + 1}️⃣ {photo['caption']}" for i, photo in enumerate(photos)])
+    izohlar = "\n".join([f"{i+1}️⃣ {photo['caption']}" for i, photo in enumerate(photos)])
 
     caption = (
         f"📩 <b>Yangi xabar:</b>\n"
@@ -346,7 +335,6 @@ async def send_to_admin(message: Message, state: FSMContext):
     await send_main_menu(message.chat.id)
     await state.clear()
 
-
 # ==========================================================
 # 🔹 Admin callback handlerlari
 # ==========================================================
@@ -367,7 +355,6 @@ async def accept_user_callback(callback: CallbackQuery):
         text=f"Admindan sizga yangi xabar\nXabari: Qabul qilindi\nStatus: {user.status.value}"
     )
 
-
 @dp.callback_query(F.data.startswith("reject_user_"))
 async def reject_user_callback(callback: CallbackQuery):
     if callback.from_user.id != ADMIN_ID:
@@ -385,7 +372,6 @@ async def reject_user_callback(callback: CallbackQuery):
         text=f"Admindan sizga yangi xabar\nXabari: Rad etildi\nStatus: {user.status.value}"
     )
 
-
 @dp.callback_query(F.data.startswith("message_user_"))
 async def message_user_callback(callback: CallbackQuery, state: FSMContext):
     if callback.from_user.id != ADMIN_ID:
@@ -398,9 +384,8 @@ async def message_user_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("✉️ Foydalanuvchiga yuboriladigan xabarni yozing:")
     await callback.answer("Xabar yuborish rejimi yoqildi.")
 
-
 # ==========================================================
-# 🔹 Admin xabar yuborish
+# 🔹 Admin xabar yuborish (bitta foydalanuvchiga)
 # ==========================================================
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
@@ -458,6 +443,164 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
     await state.clear()
 
+# ==========================================================
+# 🔹 Admin barcha foydalanuvchilarga xabar yuborish (/broadcast)
+# ==========================================================
+@dp.message(Command("broadcast"))
+async def broadcast_handler(message: Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        return
+
+    await message.answer(
+        "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yuboring (matn, rasm, hujjat, video yoki audio):"
+    )
+    await state.set_state(AdminMessageState.waiting_for_broadcast)
+
+@dp.message(AdminMessageState.waiting_for_broadcast)
+async def broadcast_message_handler(message: Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    users = get_all_users()  # Barcha foydalanuvchilarni olish
+    if not users:
+        await message.answer("❌ Ma'lumotlar bazasida foydalanuvchilar topilmadi.")
+        await state.clear()
+        return
+
+    success_count = 0
+    error_count = 0
+
+    for user in users:
+        try:
+            if message.text:
+                await bot.send_message(
+                    chat_id=user.telegram_id,
+                    text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+                )
+            elif message.photo:
+                await bot.send_photo(
+                    chat_id=user.telegram_id,
+                    photo=message.photo[-1].file_id,
+                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+                )
+            elif message.document:
+                await bot.send_document(
+                    chat_id=user.telegram_id,
+                    document=message.document.file_id,
+                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+                )
+            elif message.video:
+                await bot.send_video(
+                    chat_id=user.telegram_id,
+                    video=message.video.file_id,
+                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+                )
+            elif message.audio:
+                await bot.send_audio(
+                    chat_id=user.telegram_id,
+                    audio=message.audio.file_id,
+                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+                )
+            else:
+                await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
+                await state.clear()
+                return
+            success_count += 1
+            await asyncio.sleep(0.05)  # Telegram API cheklovlaridan qochish uchun pauza
+        except Exception as e:
+            error_count += 1
+            print(f"❌ Xabar yuborishda xato (user {user.telegram_id}): {e}")
+
+    await message.answer(
+        f"📢 Xabar yuborish natijasi:\n"
+        f"✅ Muvaffaqiyatli: {success_count} ta foydalanuvchiga\n"
+        f"❌ Xato: {error_count} ta foydalanuvchiga"
+    )
+    await state.clear()
+
+# ==========================================================
+# 🔹 Admin ma'lum bir foydalanuvchiga xabar yuborish (/send_to_user)
+# ==========================================================
+@dp.message(Command("send_to_user"))
+async def send_to_user_handler(message: Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        return
+
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.answer("⚠️ Iltimos, foydalanuvchi Telegram ID sini kiriting. Masalan: /send_to_user 12345")
+        return
+
+    try:
+        target_user_id = int(args[1])
+        user = get_user_by_telegram_id(target_user_id)
+        if not user:
+            await message.answer("❌ Bunday Telegram ID bilan foydalanuvchi topilmadi.")
+            return
+    except ValueError:
+        await message.answer("❌ Telegram ID raqam bo‘lishi kerak!")
+        return
+
+    await state.set_state(AdminMessageState.waiting_for_single_message)
+    await state.update_data(target_user_id=target_user_id)
+    await message.answer(f"✉️ Foydalanuvchiga ({target_user_id}) yuboriladigan xabarni yozing:")
+
+@dp.message(AdminMessageState.waiting_for_single_message)
+async def single_message_handler(message: Message, state: FSMContext):
+    if message.from_user.id != ADMIN_ID:
+        return
+
+    data = await state.get_data()
+    target_user_id = data.get("target_user_id")
+
+    if not target_user_id:
+        await message.answer("❌ Xato: Foydalanuvchi topilmadi.")
+        await state.clear()
+        return
+
+    user = get_user_by_telegram_id(target_user_id)
+    try:
+        if message.text:
+            await bot.send_message(
+                chat_id=target_user_id,
+                text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+            )
+        elif message.photo:
+            await bot.send_photo(
+                chat_id=target_user_id,
+                photo=message.photo[-1].file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+            )
+        elif message.document:
+            await bot.send_document(
+                chat_id=target_user_id,
+                document=message.document.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+            )
+        elif message.video:
+            await bot.send_video(
+                chat_id=target_user_id,
+                video=message.video.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+            )
+        elif message.audio:
+            await bot.send_audio(
+                chat_id=target_user_id,
+                audio=message.audio.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+            )
+        else:
+            await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
+            await state.clear()
+            return
+
+        await message.answer(f"✅ Xabar foydalanuvchiga ({target_user_id}) yuborildi!")
+    except Exception as e:
+        await message.answer(f"❌ Xabar yuborishda xato: {e}")
+
+    await state.clear()
 
 # ==========================================================
 # 🔹 Bekor qilish
@@ -472,7 +615,6 @@ async def cancel_send(message: Message, state: FSMContext):
     await send_main_menu(message.chat.id)
     await state.clear()
 
-
 # ==========================================================
 # 🔹 Har qanday boshqa xabar
 # ==========================================================
@@ -480,14 +622,12 @@ async def cancel_send(message: Message, state: FSMContext):
 async def all_message_handler(message: Message):
     await check_user_requirements(message)  # Har bir xabar uchun tekshirish
 
-
 # ==========================================================
 # 🔹 Botni ishga tushirish
 # ==========================================================
 async def main():
     print("🤖 Bot ishga tushdi...")
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

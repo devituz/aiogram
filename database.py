@@ -11,7 +11,6 @@ class UserStatus(enum.Enum):
     accept = "accept"
     rejected = "rejected"
 
-
 # 🔹 Telegram foydalanuvchilari
 class TelegramUser(Base):
     __tablename__ = "telegram_users"
@@ -30,7 +29,6 @@ class TelegramUser(Base):
         foreign_keys="Referral.referred_by_id"
     )
 
-
 # 🔹 Referral jadvali
 class Referral(Base):
     __tablename__ = "referrals"
@@ -47,11 +45,9 @@ class Referral(Base):
         foreign_keys=[referred_by_id]
     )
 
-
 # 🔹 Database engine va session
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
-
 
 # 🔹 DB init
 def init_db():
@@ -89,7 +85,6 @@ def add_user(telegram_id, fullname, username, phone_number=None):
 
     session.close()
 
-
 # 🔹 Referral qo‘shish
 def add_referral(telegram_id, referred_by_id):
     session = SessionLocal()
@@ -100,7 +95,6 @@ def add_referral(telegram_id, referred_by_id):
         session.commit()
     session.close()
 
-
 # 🔹 Foydalanuvchi obuna bo‘lganda `subscribed=True` qilamiz
 def update_referral_subscribed(telegram_id, status=True):
     session = SessionLocal()
@@ -109,7 +103,6 @@ def update_referral_subscribed(telegram_id, status=True):
         referral.subscribed = status
         session.commit()
     session.close()
-
 
 # 🔹 Foydalanuvchi telefon raqam yuborganda — subscribedni ham tekshiramiz
 def update_user_phone(telegram_id, phone_number):
@@ -128,7 +121,6 @@ def update_user_phone(telegram_id, phone_number):
 
     session.close()
 
-
 # 🔹 Referrallar soni (faqat subscribed=True bo‘lsa)
 def get_referred_count(user_id):
     session = SessionLocal()
@@ -139,14 +131,12 @@ def get_referred_count(user_id):
     session.close()
     return count
 
-
 # 🔹 Telegram ID bo‘yicha user olish
 def get_user_by_telegram_id(telegram_id):
     session = SessionLocal()
     user = session.query(TelegramUser).filter(TelegramUser.telegram_id == telegram_id).first()
     session.close()
     return user
-
 
 # 🔹 Foydalanuvchining barcha referral’larini olish (faqat obuna bo‘lganlar)
 def get_all_referred_users(user_id):
@@ -159,6 +149,12 @@ def get_all_referred_users(user_id):
     session.close()
     return referrals
 
+# 🔹 Barcha foydalanuvchilarni olish
+def get_all_users():
+    session = SessionLocal()
+    users = session.query(TelegramUser).all()
+    session.close()
+    return users
 
 # 🔹 Script sifatida ishga tushsa DB yaratish
 if __name__ == "__main__":
