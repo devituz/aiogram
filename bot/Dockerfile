@@ -4,9 +4,8 @@ FROM python:3.11-slim
 # Ishchi papka
 WORKDIR /var/www/html
 
-# Bot va web papkalarini konteynerga nusxalash
-COPY bot ./bot
-COPY web ./web
+# Bot va web papkalarini nusxalash
+COPY . .
 
 # Kerakli kutubxonalarni o‘rnatish
 RUN pip install --no-cache-dir -r bot/requirements.txt
