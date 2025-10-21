@@ -220,6 +220,7 @@ async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     chat_id = callback.message.chat.id
 
+    # Telegram kanallari tekshiriladi
     not_subscribed = []
     for ch in CHANNELS:
         if ch.startswith("@"):
@@ -229,21 +230,27 @@ async def check_subscription(callback: CallbackQuery):
                     not_subscribed.append(ch)
             except Exception:
                 not_subscribed.append(ch)
-        else:
-            not_subscribed.append(ch)  # Web linklar ham “obuna bo‘lish kerak”
 
+    # Agar Telegram kanaliga obuna bo'lmagan bo'lsa
     if not_subscribed:
         buttons = []
         for ch in CHANNELS:
-            if ch.startswith("@"):
-                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")])
-            else:
-                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=ch)])
-        buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
+            # Har bir kanal uchun tugma
+            buttons.append(
+                [InlineKeyboardButton(
+                    text="✅ Obuna bo‘lish",
+                    url=f"https://t.me/{ch.strip('@')}" if ch.startswith("@") else ch
+                )]
+            )
+        # Faqat Telegram kanallari mavjud bo'lsa, tekshirish tugmasi qo'shiladi
+        if any(ch.startswith("@") for ch in CHANNELS):
+            buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
+
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
         await callback.message.answer("⚠️ Hali obuna bo‘lmagansiz!", reply_markup=keyboard)
         return
 
+    # Telefon raqami tekshiruvi
     user = get_user_by_telegram_id(user_id)
     if not user.phone_number:
         keyboard = ReplyKeyboardMarkup(
@@ -254,8 +261,10 @@ async def check_subscription(callback: CallbackQuery):
         await callback.message.answer("📱 Telefon raqamingizni yuboring:", reply_markup=keyboard)
         return
 
+    # Foydalanuvchi obuna va telefon tekshiruvidan o'tgan bo'lsa
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
+
 
 @dp.message(F.text == "🎁 Referal")
 async def referral_handler(message: Message):
