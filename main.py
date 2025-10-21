@@ -697,6 +697,51 @@ async def statistika_handler(message: Message):
 
     await message.answer(stats_message, parse_mode="HTML")
 
+@dp.message(Command("user_info"))
+async def user_info_handler(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("Sizda bu amalni bajarish huquqi yo‘q!")
+        return
+
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer(
+            "Iltimos, foydalanuvchi Telegram ID sini kiriting.\n\n"
+            "<b>Misol:</b> <code>/user_info 123456789</code>",
+            parse_mode="HTML"
+        )
+        return
+
+    try:
+        target_id = int(args[1])
+    except ValueError:
+        await message.answer("Telegram ID faqat raqamlardan iborat bo‘lishi kerak!")
+        return
+
+    user = get_user_by_telegram_id(target_id)
+    if not user:
+        await message.answer(f"ID: <code>{target_id}</code> bilan foydalanuvchi topilmadi.", parse_mode="HTML")
+        return
+
+    # Taklif qilgan do‘stlar soni
+    referred_count = get_referred_count(target_id)
+
+    # Vaqt
+    created_time = user.created_at.strftime("%d.%m.%Y %H:%M") if user.created_at else "Noma'lum"
+
+    # Javob matni — faqat haqiqiy status.value
+    text = (
+        f"<b>Foydalanuvchi ma'lumotlari</b>\n\n"
+        f"<b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
+        f"<b>Username:</b> @{user.username or 'Yo‘q'}\n"
+        f"<b>Telegram ID:</b> <code>{user.telegram_id}</code>\n"
+        f"<b>Telefon raqam:</b> <code>{user.phone_number or 'Yo‘q'}</code>\n"
+        f"<b>Status:</b> <code>{user.status.value}</code>\n"
+        f"<b>Taklif qilgan do‘stlar:</b> {referred_count} ta\n"
+        f"<b>Ro‘yxatdan o‘tgan vaqti:</b> {created_time}"
+    )
+
+    await message.answer(text, parse_mode="HTML")
 
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
 async def cancel_send(message: Message, state: FSMContext):
