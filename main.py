@@ -27,10 +27,10 @@ from database import (
 )
 
 # 🔹 Bot sozlamalari
-TOKEN = "7548864714:AAHOj3bWV7FRgYXCfAL1yx7Qm7gDlyImK58"
+TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 ADMIN_ID = 7321341340  # Admin Telegram ID
-CHANNELS = ["@shohbozbekuz"]
-CHANNEL_POSTS = {"@shohbozbekuz": [3320]}
+CHANNELS = ["@Vertual_Bola"]
+CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
 WEBHOOK_URL = "https://winproline.ru/webhook"  # Replace with your actual domain
 WEBAPP_HOST = "0.0.0.0"  # Listen on all interfaces
