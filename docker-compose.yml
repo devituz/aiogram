@@ -2,12 +2,27 @@ version: '3.9'
 
 services:
   bot:
-    build: .                        # Dockerfile shu papkada joylashgan
+    build:
+      context: ./bot        # Bot uchun alohida papka
+      dockerfile: Dockerfile
     container_name: aiogram_bot
     restart: always
     volumes:
-      - ./:/var/www/html            # Loyihani konteyner ichiga ulaydi
+      - ./bot:/var/www/html
     working_dir: /var/www/html
     ports:
-      - "8443:8443"                # Expose port 8443 for webhook
-    command: python main.py        # Botni ishga tushiradi
+      - "8443:8443"         # Bot webhook porti
+    command: python main.py
+
+  web:
+    build:
+      context: ./web        # Flask uchun alohida papka
+      dockerfile: Dockerfile
+    container_name: flask_web
+    restart: always
+    volumes:
+      - ./web:/var/www/html
+    working_dir: /var/www/html
+    ports:
+      - "5000:5000"         # Flask porti
+    command: python app.py
