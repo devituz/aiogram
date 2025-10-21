@@ -27,7 +27,7 @@ from database import (
 )
 
 # 🔹 Bot sozlamalari
-TOKEN = "7548864714:AAFZklf5PYSSGV_qWula7-SnebSxgeBrDTA"
+TOKEN = "7548864714:AAHOj3bWV7FRgYXCfAL1yx7Qm7gDlyImK58"
 ADMIN_ID = 7321341340  # Admin Telegram ID
 CHANNELS = ["@shohbozbekuz"]
 CHANNEL_POSTS = {"@shohbozbekuz": [3320]}
