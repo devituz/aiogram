@@ -58,6 +58,14 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     print("✅ Database va jadval yaratildi!")
 
+# 🔹 Foydalanuvchi statusini yangilash
+def update_user_status(telegram_id, status):
+    session = SessionLocal()
+    user = session.query(TelegramUser).filter(TelegramUser.telegram_id == telegram_id).first()
+    if user:
+        user.status = UserStatus(status)
+        session.commit()
+    session.close()
 
 # 🔹 Yangi foydalanuvchi qo‘shish
 def add_user(telegram_id, fullname, username, phone_number=None):
