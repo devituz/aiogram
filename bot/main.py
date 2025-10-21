@@ -15,7 +15,7 @@ from aiogram.types import (
     InputMediaPhoto
 )
 from aiohttp import web
-from database import (
+from web.database import (
     add_user,
     get_user_by_telegram_id,
     get_all_users,
