@@ -585,13 +585,13 @@ async def handle_webhook(request):
     await dp.feed_raw_update(bot=bot, update=update)
     return web.Response()
 
-async def on_startup():
+async def on_startup(app):  # Added app parameter
     print("🤖 Bot ishga tushdi...")
     await bot.delete_webhook()
     await bot.set_webhook(url=WEBHOOK_URL)
     print(f"✅ Webhook set to {WEBHOOK_URL}")
 
-async def on_shutdown():
+async def on_shutdown(app):  # Added app parameter
     print("🤖 Bot to‘xtatilmoqda...")
     await bot.delete_webhook()
     await bot.session.close()
