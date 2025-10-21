@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accepted Telegram Users</title>
+    <title>Telegram Users Contest</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,17 +33,37 @@
         tr:hover {
             background-color: #f5f5f5;
         }
-        .no-data {
+        .winner {
+            background-color: #ffeb3b !important;
+            font-weight: bold;
+        }
+        .controls {
             text-align: center;
-            color: #666;
-            padding: 20px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
     <h1>Accepted Telegram Users</h1>
+
+    <div class="controls">
+        <button id="startContest">Start Contest</button>
+    </div>
+
     {% if users %}
-        <table>
+        <table id="usersTable">
             <thead>
                 <tr>
                     <th>Telegram ID</th>
@@ -70,5 +90,44 @@
     {% else %}
         <p class="no-data">No accepted users found.</p>
     {% endif %}
+
+    <script>
+        const startButton = document.getElementById('startContest');
+        const table = document.getElementById('usersTable');
+        let rows = table ? Array.from(table.querySelectorAll('tbody tr')) : [];
+        let interval;
+
+        function startContest() {
+            if (rows.length === 0) return;
+
+            // Clear previous winner
+            rows.forEach(r => r.classList.remove('winner'));
+
+            let index = 0;
+            let times = 0;
+            const totalCycles = 20; // nechta aylanish
+
+            interval = setInterval(() => {
+                // Remove highlight from previous
+                rows.forEach(r => r.classList.remove('winner'));
+
+                // Highlight current
+                rows[index].classList.add('winner');
+
+                index = (index + 1) % rows.length;
+                times++;
+
+                if (times > totalCycles) {
+                    clearInterval(interval);
+                    // Oxirgi g'olibni random qilamiz
+                    let winnerIndex = Math.floor(Math.random() * rows.length);
+                    rows.forEach(r => r.classList.remove('winner'));
+                    rows[winnerIndex].classList.add('winner');
+                }
+            }, 100); // tezlik (ms)
+        }
+
+        startButton.addEventListener('click', startContest);
+    </script>
 </body>
 </html>
