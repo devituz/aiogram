@@ -1,4 +1,6 @@
 import asyncio
+import sys
+import os
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import StatesGroup, State
@@ -15,6 +17,11 @@ from aiogram.types import (
     InputMediaPhoto
 )
 from aiohttp import web
+
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../web"))
+
+
 from web.database import (
     add_user,
     get_user_by_telegram_id,

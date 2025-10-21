@@ -2,9 +2,10 @@
 FROM python:3.11-slim
 
 # Ishchi papka
-WORKDIR /var/www/html
+WORKDIR /var/www/html/bot
 
 # Fayllarni konteynerga nusxalash
+COPY ../web ./web
 COPY . .
 
 # Kerakli kutubxonalarni o‘rnatish
