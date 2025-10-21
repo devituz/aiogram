@@ -22,7 +22,7 @@ from aiohttp import web
 sys.path.append(os.path.join(os.path.dirname(__file__), "../web"))
 
 
-from web.database import (
+from database import (
     add_user,
     get_user_by_telegram_id,
     get_all_users,
