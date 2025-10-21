@@ -1,6 +1,6 @@
 import asyncio
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -25,7 +25,6 @@ from database import (
     update_user_status
 )
 
-# 🔹 Bot sozlamalari
 TOKEN = "7548864714:AAFZklf5PYSSGV_qWula7-SnebSxgeBrDTA"
 ADMIN_ID = 7321341340  # Admin Telegram ID
 CHANNELS = ["@shohbozbekuz"]
@@ -159,7 +158,17 @@ async def start_handler(message: Message, command: CommandStart):
         if referred_by_id:
             add_referral(telegram_id=user_id, referred_by_id=referred_by_id)
 
-    await check_user_requirements(message)  # Har doim tekshirish
+    if await check_user_requirements(message):
+        await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
+
+
+# ==========================================================
+# 🔹 /shartlar handler
+# ==========================================================
+@dp.message(Command("shartlar"))
+async def shartlar_handler(message: Message):
+    if await check_user_requirements(message):
+        await send_all_channel_posts(message.chat.id)  # Shartlar bajarilgan bo‘lsa, kanal postlarini yuborish
 
 
 # ==========================================================
@@ -217,13 +226,17 @@ async def referral_handler(message: Message):
         return  # Agar shartlar bajarilmagan bo‘lsa, hech narsa qilmaydi
 
     user_id = message.from_user.id
-    referral_link = f"https://t.me/YOUR_BOT_USERNAME?start={user_id}"  # Bot username o'rniga haqiqiy nom qo'yilishi kerak
+    user = get_user_by_telegram_id(user_id)
+    referral_link = f"https://t.me/devit_gitbot?start={user_id}"  # Bot username
     referred_count = get_referred_count(user_id)
 
     text = (
         f"🎁 Sizning referal linkingiz:\n"
         f"<a href='{referral_link}'>{referral_link}</a>\n\n"
-        f"✅ Siz {referred_count} do‘stni taklif qildingiz!"
+        f"✅ Siz {referred_count} do‘stni taklif qildingiz!\n"
+        f"🆔 Telegram ID: {user.telegram_id}\n"
+        f"📱 Telefon raqam: {user.phone_number or 'Yo‘q'}\n"
+        f"📊 Status: {user.status.value}"
     )
     await message.answer(text=text, parse_mode="HTML")
 
@@ -345,10 +358,14 @@ async def accept_user_callback(callback: CallbackQuery):
 
     user_id = int(callback.data.split("_")[2])
     update_user_status(user_id, "accept")
+    user = get_user_by_telegram_id(user_id)
     await callback.answer("✅ Foydalanuvchi qabul qilindi!")
     await callback.message.edit_reply_markup(reply_markup=None)  # Tugmalarni o'chirish
     # Foydalanuvchiga xabar yuborish
-    await bot.send_message(chat_id=user_id, text="✅ Sizning so‘rovingiz qabul qilindi!")
+    await bot.send_message(
+        chat_id=user_id,
+        text=f"Admindan sizga yangi xabar\nXabari: Qabul qilindi\nStatus: {user.status.value}"
+    )
 
 
 @dp.callback_query(F.data.startswith("reject_user_"))
@@ -359,10 +376,14 @@ async def reject_user_callback(callback: CallbackQuery):
 
     user_id = int(callback.data.split("_")[2])
     update_user_status(user_id, "rejected")
+    user = get_user_by_telegram_id(user_id)
     await callback.answer("❌ Foydalanuvchi rad etildi!")
     await callback.message.edit_reply_markup(reply_markup=None)  # Tugmalarni o'chirish
     # Foydalanuvchiga xabar yuborish
-    await bot.send_message(chat_id=user_id, text="❌ Sizning so‘rovingiz rad etildi!")
+    await bot.send_message(
+        chat_id=user_id,
+        text=f"Admindan sizga yangi xabar\nXabari: Rad etildi\nStatus: {user.status.value}"
+    )
 
 
 @dp.callback_query(F.data.startswith("message_user_"))
@@ -394,19 +415,38 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
         await state.clear()
         return
 
+    user = get_user_by_telegram_id(target_user_id)
     try:
         # Har qanday turdagi xabar yuborish (matn, rasm, fayl va h.k.)
         if message.text:
-            await bot.send_message(chat_id=target_user_id, text=message.text)
+            await bot.send_message(
+                chat_id=target_user_id,
+                text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+            )
         elif message.photo:
-            await bot.send_photo(chat_id=target_user_id, photo=message.photo[-1].file_id, caption=message.caption or "")
+            await bot.send_photo(
+                chat_id=target_user_id,
+                photo=message.photo[-1].file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+            )
         elif message.document:
-            await bot.send_document(chat_id=target_user_id, document=message.document.file_id,
-                                    caption=message.caption or "")
+            await bot.send_document(
+                chat_id=target_user_id,
+                document=message.document.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+            )
         elif message.video:
-            await bot.send_video(chat_id=target_user_id, video=message.video.file_id, caption=message.caption or "")
+            await bot.send_video(
+                chat_id=target_user_id,
+                video=message.video.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+            )
         elif message.audio:
-            await bot.send_audio(chat_id=target_user_id, audio=message.audio.file_id, caption=message.caption or "")
+            await bot.send_audio(
+                chat_id=target_user_id,
+                audio=message.audio.file_id,
+                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+            )
         else:
             await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
             await state.clear()
