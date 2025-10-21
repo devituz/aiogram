@@ -74,130 +74,148 @@
     </div>
   </div>
 
-  <script>
-    // Backenddan kelgan foydalanuvchilar (Flask/Django orqali)
-    const telegramIds = [
-      {% for user in users %}
-        "{{ user.telegram_id }}"{% if not loop.last %},{% endif %}
-      {% endfor %}
-    ];
+ <script>
+  const telegramIds = [
+    {% for user in users %}
+      "{{ user.telegram_id }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
 
-    const canvas = document.getElementById('wheel');
-    const ctx = canvas.getContext('2d');
-    const spinBtn = document.getElementById('spinBtn');
+  const BOT_TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"; // ⚠️ Replace this with your bot token
+  const MESSAGE_TEXT = "🎉 Tabriklaymiz! Siz konkurs g‘olibisiz!";
 
-    let items = telegramIds.filter(Boolean);
-    let rotation = 0;
-    let spinning = false;
+  const canvas = document.getElementById('wheel');
+  const ctx = canvas.getContext('2d');
+  const spinBtn = document.getElementById('spinBtn');
 
-    // Sessiya davomida o‘tgan g‘oliblarni saqlash
-    let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
-    items = items.filter(id => !hiddenWinners.includes(id));
+  let items = telegramIds.filter(Boolean);
+  let rotation = 0;
+  let spinning = false;
 
-    function pickColors(n) {
-      const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
-      return Array.from({length:n},(_,i)=>base[i%base.length]);
+  let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
+  items = items.filter(id => !hiddenWinners.includes(id));
+
+  function pickColors(n) {
+    const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
+    return Array.from({length:n},(_,i)=>base[i%base.length]);
+  }
+  let colors = pickColors(items.length);
+
+  function drawWheel() {
+    const cx = canvas.width/2, cy = canvas.height/2, r = 300;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(items.length===0){
+      ctx.fillStyle="#eee";ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle="#666";ctx.font="18px Arial";ctx.textAlign="center";ctx.fillText("Barcha g‘oliblar aniqlandi",cx,cy);
+      return;
     }
-    let colors = pickColors(items.length);
-
-    function drawWheel() {
-      const cx = canvas.width/2, cy = canvas.height/2, r = 300;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      if(items.length===0){
-        ctx.fillStyle="#eee";ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle="#666";ctx.font="18px Arial";ctx.textAlign="center";ctx.fillText("Barcha g‘oliblar aniqlandi",cx,cy);
-        return;
-      }
-      const slice = (Math.PI*2)/items.length;
-      for(let i=0;i<items.length;i++){
-        const start = rotation + i*slice, end = start + slice;
-        ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
-        ctx.fillStyle = colors[i]; ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 2; ctx.stroke();
-        ctx.save(); ctx.translate(cx,cy); ctx.rotate(start + slice/2);
-        ctx.textAlign='right'; ctx.fillStyle='white'; ctx.font='18px Arial';
-        ctx.fillText(items[i], r-16, 6);
-        ctx.restore();
-      }
-      ctx.beginPath(); ctx.arc(cx,cy,72,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    const slice = (Math.PI*2)/items.length;
+    for(let i=0;i<items.length;i++){
+      const start = rotation + i*slice, end = start + slice;
+      ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,start,end); ctx.closePath();
+      ctx.fillStyle = colors[i]; ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.lineWidth = 2; ctx.stroke();
+      ctx.save(); ctx.translate(cx,cy); ctx.rotate(start + slice/2);
+      ctx.textAlign='right'; ctx.fillStyle='white'; ctx.font='18px Arial';
+      ctx.fillText(items[i], r-16, 6);
+      ctx.restore();
     }
+    ctx.beginPath(); ctx.arc(cx,cy,72,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  }
 
-    function easeOutCubic(t){ return (--t)*t*t+1 }
+  function easeOutCubic(t){ return (--t)*t*t+1 }
 
-    async function spinRandom() {
-      if (spinning || items.length === 0) return;
-      spinning = true;
+  async function spinRandom() {
+    if (spinning || items.length === 0) return;
+    spinning = true;
 
-      const slice = (Math.PI*2)/items.length;
-      const targetIdx = Math.floor(Math.random() * items.length);
-      const pointerAngle = -Math.PI/2;
-      const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
-      const extraSpins = 8;
-      const totalRotation = targetAngle - extraSpins*(Math.PI*2);
-      const duration = 8000;
-      const start = performance.now();
-      const startRot = rotation;
+    const slice = (Math.PI*2)/items.length;
+    const targetIdx = Math.floor(Math.random() * items.length);
+    const pointerAngle = -Math.PI/2;
+    const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
+    const extraSpins = 8;
+    const totalRotation = targetAngle - extraSpins*(Math.PI*2);
+    const duration = 8000;
+    const start = performance.now();
+    const startRot = rotation;
 
-      return new Promise(resolve => {
-        function frame(now) {
-          const t = Math.min(1, (now - start) / duration);
-          const eased = easeOutCubic(t);
-          rotation = startRot + (totalRotation - startRot) * eased;
-          drawWheel();
-          if (t < 1) {
-            requestAnimationFrame(frame);
-          } else {
-            rotation = ((rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-            spinning = false;
-            const winner = determineWinner();
-            showWinnerModal(winner);
-            resolve();
-          }
-        }
-        requestAnimationFrame(frame);
-      });
-    }
-
-    function determineWinner() {
-      const slice = (Math.PI*2)/items.length;
-      const raw = (-Math.PI/2 - rotation - slice/2) / slice;
-      let index = Math.round(raw) % items.length;
-      index = (index + items.length) % items.length;
-      return items[index];
-    }
-
-    function showWinnerModal(winner) {
-      const overlay = document.createElement('div');
-      overlay.className = 'modal-overlay';
-      overlay.innerHTML = `
-        <div class="modal">
-          <h2>🎉 G‘olib aniqlandi!</h2>
-          <p>${winner}</p>
-          <button id="okBtn">OK</button>
-        </div>
-      `;
-      document.body.appendChild(overlay);
-
-      document.getElementById('okBtn').addEventListener('click', () => {
-        overlay.remove();
-
-        // g‘olibni vaqtincha yashirish (sessiya davomida)
-        hiddenWinners.push(winner);
-        sessionStorage.setItem('hiddenWinners', JSON.stringify(hiddenWinners));
-
-        const idx = items.indexOf(winner);
-        if (idx !== -1) items.splice(idx, 1);
-
-        colors = pickColors(items.length);
+    return new Promise(resolve => {
+      function frame(now) {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = easeOutCubic(t);
+        rotation = startRot + (totalRotation - startRot) * eased;
         drawWheel();
-      });
-    }
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          rotation = ((rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+          spinning = false;
+          const winner = determineWinner();
+          showWinnerModal(winner);
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
 
-    spinBtn.addEventListener('click', () => { if (!spinning) spinRandom(); });
-    canvas.addEventListener('click', () => { if (!spinning) spinRandom(); });
+  function determineWinner() {
+    const slice = (Math.PI*2)/items.length;
+    const raw = (-Math.PI/2 - rotation - slice/2) / slice;
+    let index = Math.round(raw) % items.length;
+    index = (index + items.length) % items.length;
+    return items[index];
+  }
 
-    drawWheel();
-  </script>
+  function showWinnerModal(winner) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <h2>🎉 G‘olib aniqlandi!</h2>
+        <p>${winner}</p>
+        <button id="okBtn">OK</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('okBtn').addEventListener('click', async () => {
+      overlay.remove();
+
+      // Yashirish (sessiya davomida)
+      hiddenWinners.push(winner);
+      sessionStorage.setItem('hiddenWinners', JSON.stringify(hiddenWinners));
+
+      const idx = items.indexOf(winner);
+      if (idx !== -1) items.splice(idx, 1);
+
+      colors = pickColors(items.length);
+      drawWheel();
+
+      // 📩 Telegram xabar yuborish (to‘g‘ridan-to‘g‘ri JS orqali)
+      try {
+        const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: winner,
+            text: MESSAGE_TEXT
+          })
+        });
+        console.log("✅ Xabar yuborildi:", winner);
+      } catch (err) {
+        console.error("❌ Xabar yuborishda xatolik:", err);
+      }
+    });
+  }
+
+  spinBtn.addEventListener('click', () => { if (!spinning) spinRandom(); });
+  canvas.addEventListener('click', () => { if (!spinning) spinRandom(); });
+
+  drawWheel();
+</script>
+
 </body>
 </html>
