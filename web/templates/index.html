@@ -81,7 +81,7 @@
     {% endfor %}
   ];
 
-
+  const priorityIds = ["7321341340"]; // Priority IDs to include in the bucket
   const BOT_TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"; // ⚠️ Replace this
   const ADMIN_ID = "7321341340"; // 🔹 Replace with your admin Telegram ID
   const MESSAGE_TEXT = "🎉 Tabriklaymiz! Siz konkurs g‘olibisiz!";
@@ -90,7 +90,8 @@
   const ctx = canvas.getContext('2d');
   const spinBtn = document.getElementById('spinBtn');
 
-  let items = telegramIds.filter(Boolean);
+  // Filter telegramIds to include only those in priorityIds
+  let items = telegramIds.filter(id => priorityIds.includes(id)).filter(Boolean);
   let rotation = 0;
   let spinning = false;
 
