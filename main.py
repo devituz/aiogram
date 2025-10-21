@@ -299,7 +299,7 @@ async def referral_handler(message: Message):
     text = (
         f"🎁 Sizning referal linkingiz:\n"
         f"<a href='{referral_link}'>{referral_link}</a>\n\n"
-        f"✅ Siz {referred_count} do‘stni taklif qildingiz!\n"
+        f"✅ Siz 5/{referred_count} do‘stni taklif qildingiz! Eslatma agar 5 ta do'stizni taklif qilmagan bo'lsangiz konkursda ishtirok eta olmaysiz\n"
         f"🆔 Telegram ID: {user.telegram_id}\n"
         f"📱 Telefon raqam: {user.phone_number or 'Yo‘q'}\n"
         f"📊 Status: {user.status.value}"
