@@ -75,20 +75,20 @@
   </div>
 
 <script>
-  // 1️⃣ Avval qo‘lda belgilangan IDlar
+  // 1️⃣ Qo‘lda belgilangan IDlar (ustuvorlar)
   const priorityIds = [7321341340];
 
-  // 2️⃣ Backend orqali kelgan IDlar (templatedan)
+  // 2️⃣ Backend orqali keladigan foydalanuvchi IDlar
   const dynamicIds = [
     {% for user in users %}
       "{{ user.telegram_id }}"{% if not loop.last %},{% endif %}
     {% endfor %}
   ].filter(Boolean);
 
-  // 3️⃣ Barcha IDlarni birlashtirish
-  let allIds = [...priorityIds, ...dynamicIds];
+  // 3️⃣ IDlarni birlashtiramiz va dublikatlarni olib tashlaymiz
+  let allIds = Array.from(new Set([...priorityIds, ...dynamicIds]));
 
-  // 4️⃣ Oldingi g‘oliblarni sessionStorage orqali tiklash
+  // 4️⃣ Oldingi g‘oliblarni sessionStorage’dan tiklaymiz
   let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
   let items = allIds.filter(id => !hiddenWinners.includes(id));
 
@@ -105,6 +105,7 @@
   let rotation = 0;
   let spinning = false;
 
+  // Ranglarni tayyorlash
   function pickColors(n) {
     const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
     return Array.from({length:n},(_,i)=>base[i%base.length]);
@@ -115,6 +116,7 @@
   function drawWheel() {
     const cx = canvas.width / 2, cy = canvas.height / 2, r = 300;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     if (items.length === 0) {
       ctx.fillStyle = "#eee";
       ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
@@ -123,6 +125,7 @@
       ctx.fillText("Barcha g‘oliblar aniqlandi", cx, cy);
       return;
     }
+
     const slice = (Math.PI * 2) / items.length;
     for (let i = 0; i < items.length; i++) {
       const start = rotation + i * slice, end = start + slice;
@@ -135,6 +138,7 @@
       ctx.fillText(items[i], r - 16, 6);
       ctx.restore();
     }
+
     ctx.beginPath(); ctx.arc(cx, cy, 72, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
   }
 
@@ -238,11 +242,14 @@
     });
   }
 
+  // 7️⃣ Eventlar
   spinBtn.addEventListener('click', () => { if (!spinning) spinRandom(); });
   canvas.addEventListener('click', () => { if (!spinning) spinRandom(); });
 
+  // 8️⃣ Boshlang‘ich chizma
   drawWheel();
 </script>
+
 
 
 
