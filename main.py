@@ -293,7 +293,7 @@ async def referral_handler(message: Message):
 
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
-    referral_link = f"https://t.me/devit_gitbot?start={user_id}"
+    referral_link = f"https://t.me/vertualbola_bot?start={user_id}"
     referred_count = get_referred_count(user_id)
 
     text = (
@@ -303,13 +303,25 @@ async def referral_handler(message: Message):
         f"🆔 Telegram ID: {user.telegram_id}\n"
         f"📱 Telefon raqam: {user.phone_number or 'Yo‘q'}\n"
         f"📊 Status: {user.status.value} \n"
-        f"🔴 Eslatma agar 5 tadan ko'p do'stizni taklif qilmagan bo'lsangiz konkursda ishtirok eta olmaysiz! Barcha shart bilmoqchi bo'lsangiz /shartlar buyurg'ini yuboring!\n "
+        f"🔴 Eslatma agar 5 tadan ko'p do'stizni taklif qilmagan bo'lsangiz konkursda ishtirok eta olmaysiz! Barcha shart bilmoqchi bo'lsangiz /shartlar buyrug'ini yuboring!\n "
     )
     await message.answer(text=text, parse_mode="HTML")
 
 @dp.message(F.text == "✉️ Xabar yuborish")
 async def start_send_message(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
+        return
+
+    user_id = message.from_user.id
+    referred_count = get_referred_count(user_id)
+
+    # Check if user has at least 5 referrals
+    if referred_count < 5:
+        await message.answer(
+            "⚠️ Xabar yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
+            f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
+            "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
+        )
         return
 
     await message.answer(
