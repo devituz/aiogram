@@ -1,4 +1,0 @@
-aiogram==3.13.1
-SQLAlchemy==2.0.25
-aiohttp==3.10.5
-flask==3.0.3
