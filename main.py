@@ -29,7 +29,10 @@ from database import (
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 ADMIN_ID = 7321341340  # Admin Telegram ID
-CHANNELS = ["@Vertual_Bola", "kick.com/vertual-bola"]
+CHANNELS = [
+    "@Vertual_Bola",          # Telegram kanali
+    "https://kick.com/vertual-bola"  # Web link
+]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
 WEBHOOK_URL = "https://winproline.ru/webhook"  # Replace with your actual domain
@@ -53,16 +56,21 @@ class AdminMessageState(StatesGroup):
 # ==========================================================
 # 🔹 Obuna tekshirish
 # ==========================================================
-async def is_subscribed(user_id):
-    for channel in CHANNELS:
-        try:
-            member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-            if member.status not in ["member", "administrator", "creator"]:
+async def is_subscribed(user_id: int) -> bool:
+    for ch in CHANNELS:
+        if ch.startswith("@"):  # Telegram kanali bo'lsa
+            try:
+                member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+                if member.status not in ["member", "administrator", "creator"]:
+                    return False
+            except Exception as e:
+                print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
                 return False
-        except Exception as e:
-            print(f"❌ Obuna tekshirishda xato: {e}")
-            return False
+        else:
+            # Web linklar uchun tekshirish qilinmaydi
+            continue
     return True
+
 
 # ==========================================================
 # 🔹 Kanal postlarini yuborish
@@ -98,7 +106,10 @@ async def send_main_menu(chat_id: int):
 # ==========================================================
 # 🔹 Foydalanuvchi talablarini tekshirish
 # ==========================================================
-async def check_user_requirements(message: Message):
+# ==========================================================
+# 🔹 Foydalanuvchi talablarini tekshirish
+# ==========================================================
+async def check_user_requirements(message: Message) -> bool:
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
 
@@ -110,13 +121,37 @@ async def check_user_requirements(message: Message):
         )
         user = get_user_by_telegram_id(user_id)
 
-    if not await is_subscribed(user_id):
-        buttons = [[InlineKeyboardButton(text=f"🔗 {ch}", url=f"https://t.me/{ch.strip('@')}")] for ch in CHANNELS]
+    # Obuna bo'lish talablarini tekshirish
+    not_subscribed_channels = []
+    for ch in CHANNELS:
+        if ch.startswith("@"):  # faqat Telegram kanali tekshiriladi
+            try:
+                member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+                if member.status not in ["member", "administrator", "creator"]:
+                    not_subscribed_channels.append(ch)
+            except Exception as e:
+                print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
+                not_subscribed_channels.append(ch)
+
+    if not_subscribed_channels:
+        buttons = []
+        for ch in CHANNELS:
+            if ch.startswith("@"):  # Telegram kanali
+                buttons.append([InlineKeyboardButton(text="✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")])
+            else:  # Web link
+                buttons.append([InlineKeyboardButton(text=f"🔗 {ch}", url=ch)])
+
+        # Tekshirish tugmasi
         buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-        await message.answer("⚠️ Quyidagi kanallarga obuna bo‘ling:", reply_markup=keyboard)
+
+        await message.answer(
+            "⚠️ Quyidagi kanallarga obuna bo‘ling yoki havolalarni tekshiring:",
+            reply_markup=keyboard
+        )
         return False
 
+    # Telefon raqami tekshiruvi
     if not user.phone_number:
         keyboard = ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="📞 Telefon raqamni yuborish", request_contact=True)]],
@@ -126,8 +161,10 @@ async def check_user_requirements(message: Message):
         await message.answer("📱 Iltimos, telefon raqamingizni yuboring:", reply_markup=keyboard)
         return False
 
+    # Foydalanuvchi obuna va telefon tekshiruvidan o'tgan bo'lsa
     update_referral_subscribed(telegram_id=user_id, status=True)
     return True
+
 
 # ==========================================================
 # 🔹 Handlers
