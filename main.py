@@ -1,6 +1,4 @@
 import asyncio
-import sys
-import os
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import StatesGroup, State
@@ -19,7 +17,7 @@ from aiogram.types import (
 from aiohttp import web
 
 
-from web.database import (
+from database import (
     add_user,
     get_user_by_telegram_id,
     get_all_users,
