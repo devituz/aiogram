@@ -697,6 +697,43 @@ async def statistika_handler(message: Message):
 
     await message.answer(stats_message, parse_mode="HTML")
 
+@dp.message(Command("user_info"))
+async def user_info_handler(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        return
+
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2:
+        await message.answer("⚠️ Foydalanuvchi Telegram ID sini kiriting.\nMisol: /user_info 123456789")
+        return
+
+    try:
+        target_id = int(args[1])
+    except ValueError:
+        await message.answer("❌ ID faqat raqam bo‘lishi kerak!")
+        return
+
+    user = get_user_by_telegram_id(target_id)
+    if not user:
+        await message.answer("❌ Bunday foydalanuvchi bazada topilmadi.")
+        return
+
+    referred_count = get_referred_count(user.telegram_id)
+
+    text = (
+        f"👤 <b>Foydalanuvchi ma’lumotlari:</b>\n"
+        f"━━━━━━━━━━━━━━━\n"
+        f"🆔 <b>Telegram ID:</b> <code>{user.telegram_id}</code>\n"
+        f"👨‍💼 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
+        f"💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
+        f"📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
+        f"📊 <b>Status:</b> {user.status.value}\n"
+        f"🤝 <b>Taklif qilgan do‘stlar soni:</b> {referred_count}\n"
+    )
+
+    await message.answer(text, parse_mode="HTML")
+
 
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
 async def cancel_send(message: Message, state: FSMContext):
