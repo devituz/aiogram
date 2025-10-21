@@ -75,12 +75,10 @@
   </div>
 
  <script>
-  // DO'STLARINGIZNING TELEGRAM ID'LARINI BU YERGA YOZING
   const FRIENDS_IDS = [
     "7321341340"
   ];
 
-  // Serverdan kelgan ID'lar (Jinja2 templated)
   const telegramIds = [
     {% for user in users %}
       "{{ user.telegram_id }}"{% if not loop.last %},{% endif %}
@@ -89,19 +87,15 @@
 
   console.log("Server IDlar:", telegramIds);
 
-  // === DUBLIKAT YO'Q + BIRLASHTIRISH ===
   let items = [...new Set([...telegramIds.filter(Boolean), ...FRIENDS_IDS])];
 
-  // Oldin yutganlarni o'chirish
   let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
   items = items.filter(id => !hiddenWinners.includes(id));
 
-  // === Telegram sozlamalari ===
   const BOT_TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI";
   const ADMIN_ID = "7321341340";
   const MESSAGE_TEXT = "Tabriklaymiz! Siz konkurs g‘olibisiz!";
 
-  // === Canvas elementlari ===
   const canvas = document.getElementById('wheel');
   const ctx = canvas.getContext('2d');
   const spinBtn = document.getElementById('spinBtn');
@@ -109,14 +103,12 @@
   let rotation = 0;
   let spinning = false;
 
-  // === Ranglar ===
   function pickColors(n) {
     const base = ["#ef4444","#f97316","#f59e0b","#10b981","#06b6d4","#3b82f6","#6366f1","#8b5cf6","#ec4899","#ef4444"];
     return Array.from({length:n},(_,i)=>base[i%base.length]);
   }
   let colors = pickColors(items.length);
 
-  // === G'ildirak chizish ===
   function drawWheel() {
     const cx = canvas.width/2, cy = canvas.height/2, r = 300;
     ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -142,15 +134,12 @@
     ctx.beginPath(); ctx.arc(cx,cy,72,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
   }
 
-  // === Animatsiya funksiyasi ===
   function easeOutCubic(t){ return (--t)*t*t+1 }
 
-  // === Spin funksiyasi (Do'stlar → Random) ===
   async function spinRandom() {
     if (spinning || items.length === 0) return;
     spinning = true;
 
-    // Hali yutmagan do'stlar
     const availableFriends = FRIENDS_IDS.filter(id =>
       items.includes(id) && !hiddenWinners.includes(id)
     );
@@ -158,18 +147,15 @@
     let targetIdx;
 
     if (availableFriends.length > 0) {
-      // Navbatma-navbat do'stlardan tanlash
       let turn = parseInt(sessionStorage.getItem('friendTurn') || '0');
       const winnerId = availableFriends[turn % availableFriends.length];
       turn = (turn + 1) % availableFriends.length;
       sessionStorage.setItem('friendTurn', turn);
       targetIdx = items.indexOf(winnerId);
     } else {
-      // Do'stlar tugasa — real random
       targetIdx = Math.floor(Math.random() * items.length);
     }
 
-    // Animatsiya
     const slice = (Math.PI*2)/items.length;
     const pointerAngle = -Math.PI/2;
     const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
@@ -199,7 +185,6 @@
     });
   }
 
-  // === G'olib modal ===
   function showWinnerModal(winner) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -242,11 +227,9 @@
     });
   }
 
-  // === Bosish hodisalari ===
   spinBtn.addEventListener('click', () => { if (!spinning) spinRandom(); });
   canvas.addEventListener('click', () => { if (!spinning) spinRandom(); });
 
-  // === Boshlash ===
   drawWheel();
 </script>
 
