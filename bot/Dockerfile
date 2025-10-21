@@ -4,14 +4,14 @@ FROM python:3.11-slim
 # Ishchi papka
 WORKDIR /var/www/html
 
-# Bot va web papkalarini nusxalash
+# Fayllarni konteynerga nusxalash
 COPY . .
 
 # Kerakli kutubxonalarni o‘rnatish
-RUN pip install --no-cache-dir -r bot/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose webhook port
 EXPOSE 8443
 
 # Botni ishga tushirish
-CMD ["python", "bot/main.py"]
+CMD ["python", "main.py"]
