@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 8443
 
 # Botni ishga tushirish
-CMD ["python", "bot.py"]
+CMD ["python", "main.py"]

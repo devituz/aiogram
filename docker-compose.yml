@@ -10,4 +10,4 @@ services:
     working_dir: /var/www/html
     ports:
       - "8443:8443"                # Expose port 8443 for webhook
-    command: python bot.py        # Botni ishga tushiradi
+    command: python main.py        # Botni ishga tushiradi
