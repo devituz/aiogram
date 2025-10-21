@@ -2,24 +2,20 @@ from flask import Flask, render_template
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Enum, Boolean
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 import enum
-import os
 
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-# 🔹 Database setup
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
+DATABASE_URL = "sqlite:///../database.db"
+engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
 
-# 🔹 User status
 class UserStatus(enum.Enum):
     new = "new"
     accept = "accept"
     rejected = "rejected"
 
 
-# 🔹 Telegram foydalanuvchilari
 class TelegramUser(Base):
     __tablename__ = "telegram_users"
 
