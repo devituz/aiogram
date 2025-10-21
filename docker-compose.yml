@@ -9,6 +9,7 @@ services:
     restart: always
     volumes:
       - ./bot:/var/www/html
+      - ./web:/var/www/html/web
     working_dir: /var/www/html
     ports:
       - "8443:8443"         # Bot webhook porti
