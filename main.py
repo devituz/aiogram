@@ -29,7 +29,7 @@ from database import (
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 ADMIN_ID = 7321341340  # Admin Telegram ID
-CHANNELS = ["@Vertual_Bola"]
+CHANNELS = ["@Vertual_Bola", "kick.com/vertual-bola"]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
 WEBHOOK_URL = "https://winproline.ru/webhook"  # Replace with your actual domain
