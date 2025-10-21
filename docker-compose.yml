@@ -14,13 +14,13 @@ services:
 
   web:
     build:
-      context: ./web        # Flask uchun alohida papka
+      context: ./web
       dockerfile: Dockerfile
     container_name: flask_web
     restart: always
     volumes:
-      - ./web:/var/www/html
-    working_dir: /var/www/html
+      - ./database.db:/var/www/html/web/database.db
+    working_dir: /var/www/html/web
     ports:
-      - "5000:5000"         # Flask porti
+      - "5000:5000"
     command: python app.py
