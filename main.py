@@ -94,7 +94,7 @@ async def send_all_channel_posts(chat_id: int):
 async def send_main_menu(chat_id: int):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🎁 Referal"), KeyboardButton(text="✉️ Xabar yuborish")]
+            [KeyboardButton(text="🎁 Referal"), KeyboardButton(text="✉️ Screenshoot yuborish")]
         ],
         resize_keyboard=True
     )
@@ -307,7 +307,7 @@ async def referral_handler(message: Message):
     )
     await message.answer(text=text, parse_mode="HTML")
 
-@dp.message(F.text == "✉️ Xabar yuborish")
+@dp.message(F.text == "✉️ Screenshoot yuborish")
 async def start_send_message(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
         return
@@ -318,7 +318,7 @@ async def start_send_message(message: Message, state: FSMContext):
     # Check if user has at least 5 referrals
     if referred_count < 5:
         await message.answer(
-            "⚠️ Xabar yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
+            "⚠️  Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
             f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
             "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
         )
