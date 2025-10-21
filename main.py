@@ -659,6 +659,43 @@ async def single_message_handler(message: Message, state: FSMContext):
 
     await state.clear()
 
+@dp.message(Command("statistika"))
+async def statistika_handler(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        return
+
+    # Get all users from the database
+    users = get_all_users()
+    total_users = len(users)
+    accepted_users = [user for user in users if user.status.value == "accept"]
+    accepted_count = len(accepted_users)
+
+    # Prepare the statistics message
+    stats_message = (
+        f"📊 <b>Bot Statistikasi:</b>\n"
+        f"👥 <b>Jami foydalanuvchilar:</b> {total_users} ta\n"
+        f"✅ <b>Qabul qilingan foydalanuvchilar:</b> {accepted_count} ta\n\n"
+        f"📋 <b>Qabul qilingan foydalanuvchilar ro‘yxati:</b>\n"
+    )
+
+    if not accepted_users:
+        stats_message += "ℹ️ Hozircha qabul qilingan foydalanuvchilar yo‘q."
+    else:
+        for i, user in enumerate(accepted_users, 1):
+            referrals_count = get_referred_count(user.telegram_id)
+            stats_message += (
+                f"{i}. 👤 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
+                f"   💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
+                f"   🆔 <b>Telegram ID:</b> {user.telegram_id}\n"
+                f"   📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
+                f"   📊 <b>Status:</b> {user.status.value}\n"
+                f"   🤝 <b>Taklif qilingan do‘stlar:</b> {referrals_count} ta\n\n"
+            )
+
+    await message.answer(stats_message, parse_mode="HTML")
+
+
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
 async def cancel_send(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
