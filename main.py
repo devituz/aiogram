@@ -602,8 +602,8 @@ async def on_shutdown():
 async def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
+    app.on_startup.append(on_startup)  # No parentheses, just the function reference
+    app.on_shutdown.append(on_shutdown)  # No parentheses, just the function reference
 
     runner = web.AppRunner(app)
     await runner.setup()
