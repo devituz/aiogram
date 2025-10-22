@@ -32,7 +32,7 @@ from database import (
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 
-ADMIN_IDS = [7321341340, 1234567890, 9876543210]
+ADMIN_IDS = [7321341340, 7656406127, 6223360222]
 
 CHANNELS = [
     "@Vertual_Bola",          # Telegram kanali
