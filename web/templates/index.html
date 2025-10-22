@@ -93,7 +93,7 @@
   items = items.filter(id => !hiddenWinners.includes(id));
 
   const BOT_TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI";
-  const ADMIN_ID = "7321341340";
+  const ADMIN_IDS = ["7321341340", "7656406127", "6223360222"];
   const MESSAGE_TEXT = "Tabriklaymiz! Siz konkurs g‘olibisiz!";
 
   const canvas = document.getElementById('wheel');
@@ -185,12 +185,13 @@
     });
   }
 
+  // ✅ Bir nechta adminlarga yuborish uchun yangilangan funksiya
   function showWinnerModal(winner) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <h2>G‘olib aniqlandi!</h2>
+        <h2>🏆 G‘olib aniqlandi!</h2>
         <p>${winner}</p>
         <button id="okBtn">OK</button>
       </div>
@@ -212,13 +213,21 @@
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
       try {
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        // 🏅 G‘olibga xabar yuborish
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: winner, text: MESSAGE_TEXT })
         });
 
-        await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: ADMIN_ID, text: `Yangi g‘olib:\n\n${winner}` })
-        });
+        // 👑 Har bir admin'ga xabar yuborish
+        for (const adminId of ADMIN_IDS) {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: adminId, text: `🎯 Yangi g‘olib:\n\n${winner}` })
+          });
+        }
 
         console.log(`Xabar yuborildi: ${winner}`);
       } catch (err) {
