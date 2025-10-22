@@ -1,4 +1,5 @@
 import asyncio
+from aiogram import types
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.state import StatesGroup, State
@@ -30,14 +31,16 @@ from database import (
 
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
-ADMIN_ID = 7321341340  # Admin Telegram ID
+
+ADMIN_IDS = [7321341340, 1234567890, 9876543210]
+
 CHANNELS = [
     "@Vertual_Bola",          # Telegram kanali
     "https://kick.com/vertual-bola"  # Web link
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
-WEBHOOK_URL = "https://winproline.ru/webhook"  # Replace with your actual domain
+WEBHOOK_URL = "https://winproline.ru/webhook"
 WEBAPP_HOST = "0.0.0.0"  # Listen on all interfaces
 WEBAPP_PORT = 8443  # Internal port for webhook server
 
@@ -320,8 +323,9 @@ async def start_send_message(message: Message, state: FSMContext):
     # Check if user has at least 5 referrals
     if referred_count < 5:
         await message.answer(
-            "⚠️  Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
-            f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
+            "⚠️ Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
+            "🎁 Referal  tugmasini bosing. Do'stlarizni taklif qilish uchun.\n"
+            "📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
             "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
         )
         return
@@ -402,60 +406,132 @@ async def send_to_admin(message: Message, state: FSMContext):
         else:
             media_group.append(InputMediaPhoto(media=photo["file_id"]))
 
-    await bot.send_media_group(chat_id=ADMIN_ID, media=media_group)
-    await bot.send_message(chat_id=ADMIN_ID, text="Amallar:", reply_markup=inline_keyboard)
+    # 🔹 Barcha adminlarga yuborish
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_media_group(chat_id=admin_id, media=media_group)
+            await bot.send_message(chat_id=admin_id, text="Amallar:", reply_markup=inline_keyboard)
+        except Exception as e:
+            print(f"⚠️ Admin {admin_id} ga yuborishda xatolik: {e}")
 
     await message.answer("✅ Xabaringiz yuborildi!", reply_markup=ReplyKeyboardRemove())
     await send_main_menu(message.chat.id)
     await state.clear()
 
+
 @dp.callback_query(F.data.startswith("accept_user_"))
 async def accept_user_callback(callback: CallbackQuery):
-    if callback.from_user.id != ADMIN_ID:
+    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
     user_id = int(callback.data.split("_")[2])
     update_user_status(user_id, "accept")
     user = get_user_by_telegram_id(user_id)
+
     await callback.answer("✅ Foydalanuvchi qabul qilindi!")
     await callback.message.edit_reply_markup(reply_markup=None)
+
+    # 🔹 Foydalanuvchiga xabar yuborish
     await bot.send_message(
         chat_id=user_id,
-        text=f"Admindan sizga yangi xabar\nXabari: Qabul qilindi\nStatus: {user.status.value}"
+        text=f"✅ Sizning so‘rovingiz admin tomonidan qabul qilindi!\n"
+             f"📌 Holat: <b>{user.status.value}</b>",
+        parse_mode="HTML"
     )
+
+    # 🔹 Barcha adminlarga bildirish (ixtiyoriy, lekin foydali)
+    for admin_id in ADMIN_IDS:
+        if admin_id != callback.from_user.id:
+            try:
+                await bot.send_message(
+                    admin_id,
+                    f"👤 <b>{callback.from_user.full_name}</b> foydalanuvchini qabul qildi.\n"
+                    f"🆔 <code>{user_id}</code>",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print(f"⚠️ Admin {admin_id} ga xabar yuborilmadi: {e}")
+
+
 
 @dp.callback_query(F.data.startswith("reject_user_"))
 async def reject_user_callback(callback: CallbackQuery):
-    if callback.from_user.id != ADMIN_ID:
+    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
     user_id = int(callback.data.split("_")[2])
     update_user_status(user_id, "rejected")
     user = get_user_by_telegram_id(user_id)
+
     await callback.answer("❌ Foydalanuvchi rad etildi!")
     await callback.message.edit_reply_markup(reply_markup=None)
+
+    # 🔹 Foydalanuvchiga xabar yuborish
     await bot.send_message(
         chat_id=user_id,
-        text=f"Admindan sizga yangi xabar\nXabari: Rad etildi\nStatus: {user.status.value}"
+        text=f"❌ Sizning so‘rovingiz admin tomonidan rad etildi!\n"
+             f"📌 Holat: <b>{user.status.value}</b>",
+        parse_mode="HTML"
     )
+
+    # 🔹 Qolgan adminlarga kim rad etganini bildirish (ixtiyoriy)
+    for admin_id in ADMIN_IDS:
+        if admin_id != callback.from_user.id:
+            try:
+                await bot.send_message(
+                    admin_id,
+                    f"🚫 <b>{callback.from_user.full_name}</b> foydalanuvchini rad etdi.\n"
+                    f"🆔 <code>{user_id}</code>",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print(f"⚠️ Admin {admin_id} ga xabar yuborilmadi: {e}")
+
 
 @dp.callback_query(F.data.startswith("message_user_"))
 async def message_user_callback(callback: CallbackQuery, state: FSMContext):
-    if callback.from_user.id != ADMIN_ID:
+    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
     user_id = int(callback.data.split("_")[2])
+
+    # 🔹 Holatni saqlaymiz
     await state.set_state(AdminMessageState.waiting_for_message)
     await state.update_data(target_user_id=user_id)
-    await callback.message.answer("✉️ Foydalanuvchiga yuboriladigan xabarni yozing:")
-    await callback.answer("Xabar yuborish rejimi yoqildi.")
+
+    # 🔹 Adminni xabar yozishga chaqiramiz
+    await callback.message.answer(
+        f"✉️ Foydalanuvchi uchun xabar yozing:\n"
+        f"👤 ID: <code>{user_id}</code>",
+        parse_mode="HTML"
+    )
+    await callback.answer("Xabar yuborish rejimi yoqildi ✅")
+
+    # 🔹 Qolgan adminlarga kim “xabar yuborish rejimi”ni yoqqanini bildiradi (ixtiyoriy)
+    for admin_id in ADMIN_IDS:
+        if admin_id != callback.from_user.id:
+            try:
+                await bot.send_message(
+                    admin_id,
+                    f"✉️ <b>{callback.from_user.full_name}</b> foydalanuvchi "
+                    f"<code>{user_id}</code> ga xabar yozmoqda.",
+                    parse_mode="HTML"
+                )
+            except Exception as e:
+                print(f"⚠️ Admin {admin_id} ga bildirish yuborilmadi: {e}")
+
+
 
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    # 🔹 Faqat ro'yxatda bor adminlargina xabar yubora oladi
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     data = await state.get_data()
@@ -467,50 +543,102 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
         return
 
     user = get_user_by_telegram_id(target_user_id)
+
     try:
+        # 🟢 Matnli xabar
         if message.text:
             await bot.send_message(
                 chat_id=target_user_id,
-                text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+                text=(
+                    f"📩 <b>Admindan yangi xabar:</b>\n"
+                    f"💬 <i>{message.text}</i>\n\n"
+                    f"📌 <b>Holat:</b> {user.status.value}"
+                ),
+                parse_mode="HTML"
             )
+
+        # 🟡 Rasm
         elif message.photo:
             await bot.send_photo(
                 chat_id=target_user_id,
                 photo=message.photo[-1].file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+                caption=(
+                    f"🖼 <b>Admindan yangi rasm:</b>\n"
+                    f"💬 <i>{message.caption or 'Rasm'}</i>\n\n"
+                    f"📌 <b>Holat:</b> {user.status.value}"
+                ),
+                parse_mode="HTML"
             )
+
+        # 📄 Hujjat
         elif message.document:
             await bot.send_document(
                 chat_id=target_user_id,
                 document=message.document.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+                caption=(
+                    f"📄 <b>Admindan yangi hujjat:</b>\n"
+                    f"💬 <i>{message.caption or 'Hujjat'}</i>\n\n"
+                    f"📌 <b>Holat:</b> {user.status.value}"
+                ),
+                parse_mode="HTML"
             )
+
+        # 🎥 Video
         elif message.video:
             await bot.send_video(
                 chat_id=target_user_id,
                 video=message.video.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+                caption=(
+                    f"🎥 <b>Admindan yangi video:</b>\n"
+                    f"💬 <i>{message.caption or 'Video'}</i>\n\n"
+                    f"📌 <b>Holat:</b> {user.status.value}"
+                ),
+                parse_mode="HTML"
             )
+
+        # 🎵 Audio
         elif message.audio:
             await bot.send_audio(
                 chat_id=target_user_id,
                 audio=message.audio.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+                caption=(
+                    f"🎵 <b>Admindan yangi audio:</b>\n"
+                    f"💬 <i>{message.caption or 'Audio'}</i>\n\n"
+                    f"📌 <b>Holat:</b> {user.status.value}"
+                ),
+                parse_mode="HTML"
             )
+
+        # 🔴 Noma’lum xabar turi
         else:
             await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
             await state.clear()
             return
 
-        await message.answer("✅ Xabar foydalanuvchiga yuborildi!")
+        # ✅ Adminni ogohlantirish
+        await message.answer("✅ Xabar foydalanuvchiga muvaffaqiyatli yuborildi!")
+
+        # 🔹 Qolgan adminlarga kim xabar yuborganini bildirish (ixtiyoriy)
+        for admin_id in ADMIN_IDS:
+            if admin_id != message.from_user.id:
+                try:
+                    await bot.send_message(
+                        admin_id,
+                        f"✉️ <b>{message.from_user.full_name}</b> "
+                        f"<code>{target_user_id}</code> foydalanuvchiga xabar yubordi.",
+                        parse_mode="HTML"
+                    )
+                except Exception as e:
+                    print(f"⚠️ Admin {admin_id} ga bildirish yuborilmadi: {e}")
+
     except Exception as e:
         await message.answer(f"❌ Xabar yuborishda xato: {e}")
 
     await state.clear()
 
 @dp.message(Command("broadcast"))
-async def broadcast_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+async def broadcast_handler(message: types.Message, state: FSMContext):
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
@@ -519,9 +647,10 @@ async def broadcast_handler(message: Message, state: FSMContext):
     )
     await state.set_state(AdminMessageState.waiting_for_broadcast)
 
+
 @dp.message(AdminMessageState.waiting_for_broadcast)
-async def broadcast_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+async def broadcast_message_handler(message: types.Message, state: FSMContext):
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     users = get_all_users()
@@ -532,42 +661,42 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
 
     success_count = 0
     error_count = 0
+    await message.answer("📤 Xabar yuborish boshlandi...")
 
     for user in users:
         try:
             if message.text:
                 await bot.send_message(
                     chat_id=user.telegram_id,
-                    text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+                    text=f"📢 Admindan yangi xabar:\n\n{message.text}\n\nStatus: {user.status.value}"
                 )
             elif message.photo:
                 await bot.send_photo(
                     chat_id=user.telegram_id,
                     photo=message.photo[-1].file_id,
-                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Rasm'}\n\nStatus: {user.status.value}"
                 )
             elif message.document:
                 await bot.send_document(
                     chat_id=user.telegram_id,
                     document=message.document.file_id,
-                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Hujjat'}\n\nStatus: {user.status.value}"
                 )
             elif message.video:
                 await bot.send_video(
                     chat_id=user.telegram_id,
                     video=message.video.file_id,
-                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Video'}\n\nStatus: {user.status.value}"
                 )
             elif message.audio:
                 await bot.send_audio(
                     chat_id=user.telegram_id,
                     audio=message.audio.file_id,
-                    caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Audio'}\n\nStatus: {user.status.value}"
                 )
             else:
-                await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
-                await state.clear()
-                return
+                continue
+
             success_count += 1
             await asyncio.sleep(0.05)
         except Exception as e:
@@ -575,21 +704,23 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
             print(f"❌ Xabar yuborishda xato (user {user.telegram_id}): {e}")
 
     await message.answer(
-        f"📢 Xabar yuborish natijasi:\n"
+        f"📢 Xabar yuborish yakunlandi!\n"
         f"✅ Muvaffaqiyatli: {success_count} ta foydalanuvchiga\n"
         f"❌ Xato: {error_count} ta foydalanuvchiga"
     )
     await state.clear()
 
+
+# ==== 2. BIR FOYDALANUVCHIGA XABAR YUBORISH ====
 @dp.message(Command("send_to_user"))
-async def send_to_user_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+async def send_to_user_handler(message: types.Message, state: FSMContext):
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        await message.answer("⚠️ Iltimos, foydalanuvchi Telegram ID sini kiriting. Masalan: /send_to_user 12345")
+        await message.answer("⚠️ Iltimos, foydalanuvchi Telegram ID sini kiriting. Masalan: /send_to_user 123456789")
         return
 
     try:
@@ -606,9 +737,10 @@ async def send_to_user_handler(message: Message, state: FSMContext):
     await state.update_data(target_user_id=target_user_id)
     await message.answer(f"✉️ Foydalanuvchiga ({target_user_id}) yuboriladigan xabarni yozing:")
 
+
 @dp.message(AdminMessageState.waiting_for_single_message)
-async def single_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+async def single_message_handler(message: types.Message, state: FSMContext):
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     data = await state.get_data()
@@ -624,31 +756,31 @@ async def single_message_handler(message: Message, state: FSMContext):
         if message.text:
             await bot.send_message(
                 chat_id=target_user_id,
-                text=f"Admindan sizga yangi xabar\nXabari: {message.text}\nStatus: {user.status.value}"
+                text=f"📬 Admindan xabar:\n\n{message.text}\n\nStatus: {user.status.value}"
             )
         elif message.photo:
             await bot.send_photo(
                 chat_id=target_user_id,
                 photo=message.photo[-1].file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Rasm'}\nStatus: {user.status.value}"
+                caption=f"📬 Admindan xabar:\n\n{message.caption or 'Rasm'}\n\nStatus: {user.status.value}"
             )
         elif message.document:
             await bot.send_document(
                 chat_id=target_user_id,
                 document=message.document.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Hujjat'}\nStatus: {user.status.value}"
+                caption=f"📬 Admindan xabar:\n\n{message.caption or 'Hujjat'}\n\nStatus: {user.status.value}"
             )
         elif message.video:
             await bot.send_video(
                 chat_id=target_user_id,
                 video=message.video.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Video'}\nStatus: {user.status.value}"
+                caption=f"📬 Admindan xabar:\n\n{message.caption or 'Video'}\n\nStatus: {user.status.value}"
             )
         elif message.audio:
             await bot.send_audio(
                 chat_id=target_user_id,
                 audio=message.audio.file_id,
-                caption=f"Admindan sizga yangi xabar\nXabari: {message.caption or 'Audio'}\nStatus: {user.status.value}"
+                caption=f"📬 Admindan xabar:\n\n{message.caption or 'Audio'}\n\nStatus: {user.status.value}"
             )
         else:
             await message.answer("❌ Yuborish uchun mos xabar turi topilmadi.")
@@ -663,17 +795,15 @@ async def single_message_handler(message: Message, state: FSMContext):
 
 @dp.message(Command("statistika"))
 async def statistika_handler(message: Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
-    # Get all users from the database
     users = get_all_users()
     total_users = len(users)
     accepted_users = [user for user in users if user.status.value == "accept"]
     accepted_count = len(accepted_users)
 
-    # Prepare the statistics message
     stats_message = (
         f"📊 <b>Bot Statistikasi:</b>\n"
         f"👥 <b>Jami foydalanuvchilar:</b> {total_users} ta\n"
@@ -697,9 +827,10 @@ async def statistika_handler(message: Message):
 
     await message.answer(stats_message, parse_mode="HTML")
 
+
 @dp.message(Command("user_info"))
 async def user_info_handler(message: Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
