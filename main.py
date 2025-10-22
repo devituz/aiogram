@@ -325,7 +325,7 @@ async def start_send_message(message: Message, state: FSMContext):
         await message.answer(
             "⚠️ Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
             "🎁 Referal  tugmasini bosing. Do'stlarizni taklif qilish uchun.\n"
-            "📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
+            f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
             "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
         )
         return
