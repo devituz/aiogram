@@ -16,7 +16,6 @@ from aiogram.types import (
 )
 from aiohttp import web
 
-
 from database import (
     add_user,
     get_user_by_telegram_id,
@@ -30,7 +29,7 @@ from database import (
 
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
-ADMIN_ID = 7321341340  # Admin Telegram ID
+ADMIN_IDS = [7321341340, 1234567890, 9876543210]  # Admin Telegram ID lar ro'yxati
 CHANNELS = [
     "@Vertual_Bola",          # Telegram kanali
     "https://kick.com/vertual-bola"  # Web link
@@ -55,7 +54,6 @@ class AdminMessageState(StatesGroup):
     waiting_for_broadcast = State()
     waiting_for_single_message = State()
 
-
 # 🔹 Obuna tekshirish
 async def is_subscribed(user_id: int) -> bool:
     for ch in CHANNELS:
@@ -70,7 +68,6 @@ async def is_subscribed(user_id: int) -> bool:
         # Web linklar uchun tekshirish qilinmaydi
     return True
 
-
 # ==========================================================
 # 🔹 Kanal postlarini yuborish
 # ==========================================================
@@ -80,12 +77,6 @@ async def send_all_channel_posts(chat_id: int):
             for post_id in post_ids:
                 await bot.forward_message(chat_id=chat_id, from_chat_id=channel, message_id=post_id)
                 await asyncio.sleep(0.3)
-
-        # await bot.send_message(
-        #     chat_id=chat_id,
-        #     text="📦 *Go Tashkent* ilovasi haqida ma’lumot!\n\n👇 Quyidagini sinab ko‘ring:",
-        #     parse_mode="Markdown"
-        # )
         await send_main_menu(chat_id)
     except Exception as e:
         print(f"❌ send_all_channel_posts xatosi: {e}")
@@ -103,8 +94,6 @@ async def send_main_menu(chat_id: int):
     await bot.send_message(chat_id, "📋 Asosiy menyu:", reply_markup=keyboard)
 
 # ==========================================================
-# 🔹 Foydalanuvchi talablarini tekshirish
-
 # 🔹 Foydalanuvchi talablarini tekshirish
 async def check_user_requirements(message: Message) -> bool:
     user_id = message.from_user.id
@@ -138,7 +127,6 @@ async def check_user_requirements(message: Message) -> bool:
         # Telegram kanallari uchun tugmalar
         for ch in telegram_channels:
             buttons.append(
-                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({ch})", url=f"https://t.me/{ch.strip('@')}")]
                 [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")]
             )
 
@@ -146,7 +134,6 @@ async def check_user_requirements(message: Message) -> bool:
         for link in web_links:
             buttons.append(
                 [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=link)]
-                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({link})", url=link)]
             )
 
         # Faqat Telegram kanallari uchun tekshirish tugmasi
@@ -174,9 +161,6 @@ async def check_user_requirements(message: Message) -> bool:
         return False
 
     update_referral_subscribed(telegram_id=user_id, status=True)
-    return True
-
-
 
 @dp.message(CommandStart())
 async def start_handler(message: Message, command: CommandStart):
@@ -224,7 +208,6 @@ async def contact_handler(message: Message):
     else:
         await check_user_requirements(message)
 
-
 @dp.callback_query(F.data == "check_sub")
 async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
@@ -247,7 +230,6 @@ async def check_subscription(callback: CallbackQuery):
         for ch in telegram_channels:
             buttons.append(
                 [InlineKeyboardButton(
-                    # text=f"✅ Telegram kanal({ch})",
                     text=f"✅ Obuna bo'lish",
                     url=f"https://t.me/{ch.strip('@')}"
                 )]
@@ -256,7 +238,6 @@ async def check_subscription(callback: CallbackQuery):
         for link in web_links:
             buttons.append(
                 [InlineKeyboardButton(
-                    # text=f"🔗 Cick ({link})",
                     text=f"✅ Obuna bo'lish",
                     url=link
                 )]
@@ -286,7 +267,6 @@ async def check_subscription(callback: CallbackQuery):
     # Foydalanuvchi obuna va telefon tekshiruvidan o'tgan bo'lsa
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
-
 
 @dp.message(F.text == "🎁 Referal")
 async def referral_handler(message: Message):
@@ -320,9 +300,10 @@ async def start_send_message(message: Message, state: FSMContext):
     # Check if user has at least 5 referrals
     if referred_count < 5:
         await message.answer(
-            "⚠️  Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
+            f"⚠️ Screenshoot yuborish uchun kamida 5 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
+            f"🎁 Referal tugmasini bosing. Do'stlarizni taklif qilish uchun.\n"
             f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
-            "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
+            f"🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
         )
         return
 
@@ -402,8 +383,13 @@ async def send_to_admin(message: Message, state: FSMContext):
         else:
             media_group.append(InputMediaPhoto(media=photo["file_id"]))
 
-    await bot.send_media_group(chat_id=ADMIN_ID, media=media_group)
-    await bot.send_message(chat_id=ADMIN_ID, text="Amallar:", reply_markup=inline_keyboard)
+    # Barcha adminlarga xabar yuborish
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_media_group(chat_id=admin_id, media=media_group)
+            await bot.send_message(chat_id=admin_id, text="Amallar:", reply_markup=inline_keyboard)
+        except Exception as e:
+            print(f"❌ Admin {admin_id} ga xabar yuborishda xato: {e}")
 
     await message.answer("✅ Xabaringiz yuborildi!", reply_markup=ReplyKeyboardRemove())
     await send_main_menu(message.chat.id)
@@ -411,7 +397,7 @@ async def send_to_admin(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data.startswith("accept_user_"))
 async def accept_user_callback(callback: CallbackQuery):
-    if callback.from_user.id != ADMIN_ID:
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
@@ -427,7 +413,7 @@ async def accept_user_callback(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("reject_user_"))
 async def reject_user_callback(callback: CallbackQuery):
-    if callback.from_user.id != ADMIN_ID:
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
@@ -443,7 +429,7 @@ async def reject_user_callback(callback: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("message_user_"))
 async def message_user_callback(callback: CallbackQuery, state: FSMContext):
-    if callback.from_user.id != ADMIN_ID:
+    if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
@@ -455,7 +441,7 @@ async def message_user_callback(callback: CallbackQuery, state: FSMContext):
 
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     data = await state.get_data()
@@ -510,7 +496,7 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
 @dp.message(Command("broadcast"))
 async def broadcast_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
@@ -521,7 +507,7 @@ async def broadcast_handler(message: Message, state: FSMContext):
 
 @dp.message(AdminMessageState.waiting_for_broadcast)
 async def broadcast_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     users = get_all_users()
@@ -583,7 +569,7 @@ async def broadcast_message_handler(message: Message, state: FSMContext):
 
 @dp.message(Command("send_to_user"))
 async def send_to_user_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
@@ -608,7 +594,7 @@ async def send_to_user_handler(message: Message, state: FSMContext):
 
 @dp.message(AdminMessageState.waiting_for_single_message)
 async def single_message_handler(message: Message, state: FSMContext):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     data = await state.get_data()
@@ -663,17 +649,15 @@ async def single_message_handler(message: Message, state: FSMContext):
 
 @dp.message(Command("statistika"))
 async def statistika_handler(message: Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
-    # Get all users from the database
     users = get_all_users()
     total_users = len(users)
     accepted_users = [user for user in users if user.status.value == "accept"]
     accepted_count = len(accepted_users)
 
-    # Prepare the statistics message
     stats_message = (
         f"📊 <b>Bot Statistikasi:</b>\n"
         f"👥 <b>Jami foydalanuvchilar:</b> {total_users} ta\n"
@@ -699,7 +683,7 @@ async def statistika_handler(message: Message):
 
 @dp.message(Command("user_info"))
 async def user_info_handler(message: Message):
-    if message.from_user.id != ADMIN_ID:
+    if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
@@ -734,7 +718,6 @@ async def user_info_handler(message: Message):
 
     await message.answer(text, parse_mode="HTML")
 
-
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
 async def cancel_send(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
@@ -757,13 +740,13 @@ async def handle_webhook(request):
     await dp.feed_raw_update(bot=bot, update=update)
     return web.Response()
 
-async def on_startup(app):  # Added app parameter
+async def on_startup(app):
     print("🤖 Bot ishga tushdi...")
     await bot.delete_webhook()
     await bot.set_webhook(url=WEBHOOK_URL)
     print(f"✅ Webhook set to {WEBHOOK_URL}")
 
-async def on_shutdown(app):  # Added app parameter
+async def on_shutdown(app):
     print("🤖 Bot to‘xtatilmoqda...")
     await bot.delete_webhook()
     await bot.session.close()
@@ -774,8 +757,8 @@ async def on_shutdown(app):  # Added app parameter
 async def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
-    app.on_startup.append(on_startup)  # No parentheses, just the function reference
-    app.on_shutdown.append(on_shutdown)  # No parentheses, just the function reference
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
 
     runner = web.AppRunner(app)
     await runner.setup()
