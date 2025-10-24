@@ -36,7 +36,8 @@ ADMIN_IDS = [7321341340, 6323360222, 7656406127]
 
 
 CHANNELS = [
-    "@Vertual_Bola",
+    "@Vertual_Bola",          # Telegram kanali
+    "https://kick.com/vertual-bola"  # Web link
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
@@ -105,9 +106,6 @@ async def send_main_menu(chat_id: int):
     )
     await bot.send_message(chat_id, "📋 Asosiy menyu:", reply_markup=keyboard)
 
-# ==========================================================
-# 🔹 Foydalanuvchi talablarini tekshirish
-
 # 🔹 Foydalanuvchi talablarini tekshirish
 async def check_user_requirements(message: Message) -> bool:
     user_id = message.from_user.id
@@ -121,52 +119,43 @@ async def check_user_requirements(message: Message) -> bool:
         )
         user = get_user_by_telegram_id(user_id)
 
-    # Obuna bo'lish talablarini tekshirish (faqat Telegram kanallari)
+    # 🔸 Faqat Telegram kanallar uchun obuna tekshiruvi
     not_subscribed_channels = []
-    for ch in CHANNELS:
-        if ch.startswith("@"):  # faqat Telegram kanali
-            try:
-                member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
-                if member.status not in ["member", "administrator", "creator"]:
-                    not_subscribed_channels.append(ch)
-            except Exception as e:
-                print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
+    telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
+
+    for ch in telegram_channels:
+        try:
+            member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+            if member.status not in ["member", "administrator", "creator"]:
                 not_subscribed_channels.append(ch)
+        except Exception as e:
+            print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
+            not_subscribed_channels.append(ch)
 
     if not_subscribed_channels:
         buttons = []
-        telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
-        web_links = [ch for ch in CHANNELS if not ch.startswith("@")]
 
-        # Telegram kanallari uchun tugmalar
+        # 🔹 Telegram kanallari uchun tugmalar
         for ch in telegram_channels:
-            buttons.append(
-                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({ch})", url=f"https://t.me/{ch.strip('@')}")]
-                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=f"https://t.me/{ch.strip('@')}")]
-            )
+            buttons.append([
+                InlineKeyboardButton(
+                    text=f"✅ Obuna bo‘lish",
+                    url=f"https://t.me/{ch.strip('@')}"
+                )
+            ])
 
-        # Web linklar uchun tugmalar
-        for link in web_links:
-            buttons.append(
-                [InlineKeyboardButton(text=f"✅ Obuna bo‘lish", url=link)]
-                # [InlineKeyboardButton(text=f"✅ Obuna bo‘lish ({link})", url=link)]
-            )
-
-        # Faqat Telegram kanallari uchun tekshirish tugmasi
-        if telegram_channels:
-            buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
+        # 🔹 Tekshirish tugmasi
+        buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
-        # Foydalanuvchiga aniq xabar
-        # web_message = "\n🔗 Saytga tashrif buyurib Kick platformamizga kirib obuna bo'lish majburiydir!" if web_links else ""
         await message.answer(
-            f"⚠️ Quyidagi Telegram kanallarga obuna bo‘ling",
+            "⚠️ Quyidagi Telegram kanallarga obuna bo‘ling:",
             reply_markup=keyboard
         )
         return False
 
-    # Telefon raqami tekshiruvi
+    # 🔸 Telefon raqami tekshiruvi
     if not user.phone_number:
         keyboard = ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="📞 Telefon raqamni yuborish", request_contact=True)]],
@@ -176,8 +165,10 @@ async def check_user_requirements(message: Message) -> bool:
         await message.answer("📱 Iltimos, telefon raqamingizni yuboring:", reply_markup=keyboard)
         return False
 
+    # 🔸 Obuna bo‘lganini belgilaymiz
     update_referral_subscribed(telegram_id=user_id, status=True)
     return True
+
 
 
 
@@ -213,6 +204,7 @@ async def start_handler(message: Message, command: CommandStart):
 async def shartlar_handler(message: Message):
     if await check_user_requirements(message):
         await send_all_channel_posts(message.chat.id)
+
 
 @dp.message(F.contact)
 async def contact_handler(message: Message):
@@ -250,27 +242,18 @@ async def check_subscription(callback: CallbackQuery):
         for ch in telegram_channels:
             buttons.append(
                 [InlineKeyboardButton(
-                    # text=f"✅ Telegram kanal({ch})",
                     text=f"✅ Obuna bo'lish",
                     url=f"https://t.me/{ch.strip('@')}"
                 )]
             )
-        web_links = [ch for ch in CHANNELS if not ch.startswith("@")]
-        for link in web_links:
-            buttons.append(
-                [InlineKeyboardButton(
-                    # text=f"🔗 Cick ({link})",
-                    text=f"✅ Obuna bo'lish",
-                    url=link
-                )]
-            )
+
+        # Tekshirish tugmasi
         if telegram_channels:
             buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
 
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
-        web_message = "\n🔗 Saytga tashrif buyurib Kick platformamizga kirib obuna bo'lish majburiydir!" if web_links else ""
         await callback.message.answer(
-            f"⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!{web_message}",
+            "⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!",
             reply_markup=keyboard
         )
         return
@@ -289,6 +272,7 @@ async def check_subscription(callback: CallbackQuery):
     # Foydalanuvchi obuna va telefon tekshiruvidan o'tgan bo'lsa
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
+
 
 
 @dp.message(F.text == "🎁 Referal")
