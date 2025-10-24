@@ -36,8 +36,7 @@ ADMIN_IDS = [7321341340, 6323360222, 7656406127]
 
 
 CHANNELS = [
-    "@Vertual_Bola",          # Telegram kanali
-    "https://kick.com/vertual-bola"  # Web link
+    "@Vertual_Bola",
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
@@ -211,13 +210,38 @@ async def contact_handler(message: Message):
     phone = message.contact.phone_number
     user_id = message.from_user.id
 
+    # Telefon raqamini saqlaymiz
     update_user_phone(user_id, phone)
+
+    # Foydalanuvchi obuna bo‘lgan bo‘lsa
     if await is_subscribed(user_id):
         update_referral_subscribed(telegram_id=user_id, status=True)
         await message.answer("✅ Telefon raqamingiz saqlandi!", reply_markup=ReplyKeyboardRemove())
-        await send_all_channel_posts(message.chat.id)
+
+        # Kick platformasiga obuna bo‘lish xabari
+        buttons = [
+            [InlineKeyboardButton(text="🎯 Kickga obuna bo‘lish", url="https://kick.com/vertual-bola")],
+            [InlineKeyboardButton(text="➡️ Keyingisi", callback_data="continue_after_kick")]
+        ]
+        keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
+
+        await message.answer(
+            "Endi Kick platformamizga obuna bo‘ling 👇",
+            reply_markup=keyboard
+        )
+
     else:
+        # Agar hali Telegram kanallarga obuna bo‘lmagan bo‘lsa
         await check_user_requirements(message)
+
+
+# ➡️ Keyingisi tugmasi bosilganda
+@dp.callback_query(F.data == "continue_after_kick")
+async def after_kick(callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    await callback.message.answer("✅ Rahmat! Endi keyingi shartimiz quydagicha!")
+    await send_all_channel_posts(chat_id)
+
 
 
 @dp.callback_query(F.data == "check_sub")
