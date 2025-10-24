@@ -36,8 +36,7 @@ ADMIN_IDS = [7321341340, 6323360222, 7656406127]
 
 
 CHANNELS = [
-    "@Vertual_Bola",          # Telegram kanali
-    "https://kick.com/vertual-bola"  # Web link
+    "@Vertual_Bola",
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
@@ -160,9 +159,9 @@ async def check_user_requirements(message: Message) -> bool:
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
         # Foydalanuvchiga aniq xabar
-        web_message = "\n🔗 Saytga tashrif buyurib Kick platformamizga kirib obuna bo'lish majburiydir!" if web_links else ""
+        # web_message = "\n🔗 Saytga tashrif buyurib Kick platformamizga kirib obuna bo'lish majburiydir!" if web_links else ""
         await message.answer(
-            f"⚠️ Quyidagi Telegram kanallarga obuna bo‘ling:{web_message}",
+            f"⚠️ Quyidagi Telegram kanallarga obuna bo‘ling",
             reply_markup=keyboard
         )
         return False
