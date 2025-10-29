@@ -221,6 +221,7 @@ async def contact_handler(message: Message):
         # Kick platformasiga obuna bo‘lish xabari
         buttons = [
             [InlineKeyboardButton(text="🎯 Kickga obuna bo‘lish", url="https://kick.com/vertual-bola")],
+            [InlineKeyboardButton(text="Qo'llanma", url="https://t.me/lalalallalar/14")],
             [InlineKeyboardButton(text="➡️ Keyingisi", callback_data="continue_after_kick")]
         ]
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
