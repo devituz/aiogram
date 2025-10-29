@@ -658,7 +658,8 @@ async def broadcast_handler(message: types.Message, state: FSMContext):
 
 @dp.message(AdminMessageState.waiting_for_broadcast)
 async def broadcast_message_handler(message: types.Message, state: FSMContext):
-    if message.from_user.id not in ADMIN_IDS:
+    admin_id = message.from_user.id
+    if admin_id not in ADMIN_IDS:
         return
 
     users = get_all_users()
