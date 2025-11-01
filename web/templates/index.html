@@ -158,7 +158,7 @@
 
     const slice = (Math.PI*2)/items.length;
     const pointerAngle = -Math.PI/2;
-    const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
+    const targetAngle = pointerAngle + (targetIdx * slice + slice / 2);
     const extraSpins = 8;
     const totalRotation = targetAngle - extraSpins*(Math.PI*2);
     const duration = 8000;
