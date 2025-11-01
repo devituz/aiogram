@@ -29,15 +29,25 @@
       cursor:pointer; user-select:none; transition:transform .15s;
     }
     .center-btn:active { transform:translate(-50%,-50%) scale(0.95); }
+
+    /* ---------- FIXED POINTER (now points DOWN) ---------- */
     .pointer {
-      position:absolute; left:calc(50% - 14px); top:-8px; width:0; height:0;
-      border-left:14px solid transparent; border-right:14px solid transparent;
-      border-bottom:32px solid #444;
-      filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+      position:absolute;
+      left:calc(50% - 14px);
+      top:-28px;                     /* pull it above the wheel */
+      width:0; height:0;
+      border-left:14px solid transparent;
+      border-right:14px solid transparent;
+      border-top:32px solid #444;    /* triangle points DOWN */
+      filter:drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+      z-index:10;
     }
+    /* ---------------------------------------------------- */
+
     @media (max-width:700px) {
       :root { --size:360px; }
       .center-btn { width:90px; height:90px; font-size:16px; }
+      .pointer { top:-22px; }
     }
 
     /* === Modal dizayni === */
@@ -74,7 +84,7 @@
     </div>
   </div>
 
- <script>
+<script>
   const FRIENDS_IDS = [
    "6166993965"
   ];
@@ -157,8 +167,8 @@
     }
 
     const slice = (Math.PI*2)/items.length;
-    const pointerAngle = -Math.PI/2;
-    const targetAngle = pointerAngle + (targetIdx * slice + slice/2);
+    const pointerAngle = -Math.PI/2;               // 12 o’clock
+    const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
     const extraSpins = 8;
     const totalRotation = targetAngle - extraSpins*(Math.PI*2);
     const duration = 8000;
@@ -174,8 +184,7 @@
         if (t < 1) {
           requestAnimationFrame(frame);
         } else {
-          rotation = (rotation % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-
+          rotation = ((rotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
           spinning = false;
           const winner = items[targetIdx];
           showWinnerModal(winner);
@@ -186,13 +195,12 @@
     });
   }
 
-  // ✅ Bir nechta adminlarga yuborish uchun yangilangan funksiya
   function showWinnerModal(winner) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <h2>🏆 G‘olib aniqlandi!</h2>
+        <h2>G‘olib aniqlandi!</h2>
         <p>${winner}</p>
         <button id="okBtn">OK</button>
       </div>
@@ -214,19 +222,19 @@
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
       try {
-        // 🏅 G‘olibga xabar yuborish
+        // G‘olibga xabar
         await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chat_id: winner, text: MESSAGE_TEXT })
         });
 
-        // 👑 Har bir admin'ga xabar yuborish
+        // Har bir admin'ga xabar
         for (const adminId of ADMIN_IDS) {
           await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: adminId, text: `🎯 Yangi g‘olib:\n\n${winner}` })
+            body: JSON.stringify({ chat_id: adminId, text: `Yangi g‘olib:\n\n${winner}` })
           });
         }
 
@@ -242,7 +250,6 @@
 
   drawWheel();
 </script>
-
 
 </body>
 </html>
