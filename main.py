@@ -358,6 +358,7 @@ async def start_dbb_id(message: Message, state: FSMContext):
     user = get_user_by_telegram_id(message.from_user.id)
     if user.status.value == "accept":
         await message.answer("Siz allaqachon yuborgansiz!")
+        await send_main_menu(message)  # 🔹 Orqaga asosiy menyuga
         return
 
     await message.answer(
@@ -367,15 +368,16 @@ async def start_dbb_id(message: Message, state: FSMContext):
             resize_keyboard=True
         )
     )
-    await state.set_state(DBBetStates.waiting_for_dbb_id)   # FIXED
+    await state.set_state(DBBetStates.waiting_for_dbb_id)
 
 
-@dp.message(DBBetStates.waiting_for_dbb_id)   # FIXED
+@dp.message(DBBetStates.waiting_for_dbb_id)
 async def receive_dbb_id(message: Message, state: FSMContext):
     txt = message.text.strip()
     if txt == "Bekor qilish":
         await message.answer("Bekor qilindi.", reply_markup=ReplyKeyboardRemove())
         await state.clear()
+        await send_main_menu(message)  # 🔹 Orqaga asosiy menyuga
         return
 
     if not (txt.isdigit() and len(txt) == 14):
@@ -389,7 +391,7 @@ async def receive_dbb_id(message: Message, state: FSMContext):
         f"<b>Yangi DBBET ID</b>\n"
         f"Ism: {message.from_user.full_name}\n"
         f"Username: @{message.from_user.username or 'yo‘q'}\n"
-        f"Telefon: {user.phone_number}\n"
+        f"Telefon: {user.phone_number or 'yo‘q'}\n"
         f"ID: <code>{message.from_user.id}</code>\n"
         f"Do‘stlar: {ref_cnt}\n"
         f"DBBET: <code>{txt}</code>"
@@ -405,11 +407,12 @@ async def receive_dbb_id(message: Message, state: FSMContext):
     for adm in ADMIN_IDS:
         try:
             await bot.send_message(adm, caption, parse_mode="HTML", reply_markup=kb)
-        except:
-            pass
+        except Exception as e:
+            print(f"Adminga yuborishda xatolik: {e}")
 
     await message.answer("ID adminlarga yuborildi!", reply_markup=ReplyKeyboardRemove())
     await state.clear()
+    await send_main_menu(message)  # 🔹 Orqaga asosiy menyuga
 
 
 @dp.callback_query(F.data.startswith("acc_"))
