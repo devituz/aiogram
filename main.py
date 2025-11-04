@@ -374,7 +374,6 @@ async def receive_dbb_id(message: Message, state: FSMContext):
     txt = message.text.strip()
 
     if txt == "❌ Bekor qilish":
-        await message.answer("❌ Bekor qilindi", reply_markup=ReplyKeyboardRemove())
         await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
         await state.clear()
         return
