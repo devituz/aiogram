@@ -306,7 +306,7 @@ async def check_subscription(callback: CallbackQuery):
 
 
 # ——— BARABAN BUTTON (text) ———
-@dp.message(F.text == "Baraban")
+@dp.message(F.text == "🎰 Baraban")
 async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
@@ -315,26 +315,29 @@ async def baraban_handler(message: Message):
 
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
-            text="BARABANNI OCHISH",
+            text="🎰 BARABANNI OCHISH",
             web_app=types.WebAppInfo(url="https://winproline.ru/baraban/")
         )
     ]])
 
-    # STATUSNI O‘ZBEKCHA QILDIK
+    # DBBET ID — faqat bor bo‘lsa chiqadi
+    dbbet_line = f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else ""
+
+    # Status — o‘zbekcha
     if user.status.value == "new":
-        status_text = "Yangi foydalanuvchi"
+        status = "🆕 <b>Yangi foydalanuvchi</b>"
     elif user.status.value == "accept":
-        status_text = "O‘yinda ishtirokchisiz"
+        status = "✅ <b>O‘yinda ishtirokchisiz</b>"
     else:
-        status_text = "Rad etilgan"
+        status = "❌ <b>Rad etilgan</b>"
 
     text = (
-        f"<b>Sizga omad!</b>\n\n"
-        f"<b>Ism:</b> {user.fullname}\n"
-        f"{f'<b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
-        f"<b>Telefon:</b> {user.phone_number}\n"
-        f"<b>Status:</b> {status_text}\n\n"
-        f"Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
+        f"🎉 <b>Sizga omad!</b>\n\n"
+        f"👤 <b>Ism:</b> {user.fullname}\n"
+        f"{dbbet_line}"
+        f"📞 <b>Telefon:</b> {user.phone_number}\n"
+        f"📊 <b>Status:</b> {status}\n\n"
+        f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
     )
 
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
