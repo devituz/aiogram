@@ -48,6 +48,10 @@ WEBAPP_PORT = 8443  # Internal port for webhook server
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())  # FSM storage
 
+# YANGI: bitta router yaratamiz
+router = Router()
+dp.include_router(router)   # routerni dispatcherga qo‘shamiz
+
 # ==========================================================
 # 🔹 FSM holatlari
 # ==========================================================
@@ -100,7 +104,7 @@ async def send_all_channel_posts(chat_id: int):
 async def send_main_menu(chat_id: int):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🎁 Referal"), KeyboardButton(text="✉️ Screenshoot yuborish")]
+            [KeyboardButton(text="🎰 Baraban"), KeyboardButton(text="✉️ Screenshoot yuborish")]
         ],
         resize_keyboard=True
     )
