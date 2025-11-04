@@ -431,7 +431,7 @@ async def accept(cb: CallbackQuery):
 
 
 
-@dp.callback_query(F.data.startswith("reject_user_"))
+@dp.callback_query(F.data.startswith("rej_"))
 async def reject_user_callback(callback: CallbackQuery):
     # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
     if callback.from_user.id not in ADMIN_IDS:
@@ -467,7 +467,7 @@ async def reject_user_callback(callback: CallbackQuery):
                 print(f"⚠️ Admin {admin_id} ga xabar yuborilmadi: {e}")
 
 
-@dp.callback_query(F.data.startswith("message_user_"))
+@dp.callback_query(F.data.startswith("msg_"))
 async def message_user_callback(callback: CallbackQuery, state: FSMContext):
     # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
     if callback.from_user.id not in ADMIN_IDS:
