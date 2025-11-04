@@ -22,6 +22,9 @@ class TelegramUser(Base):
     fullname = Column(String, nullable=True)
     status = Column(Enum(UserStatus), default=UserStatus.new, nullable=False)
 
+    dbbet_id = Column(Integer, nullable=True)
+
+
     # 🔹 User tomonidan qilingan referrals
     referrals = relationship(
         "Referral",

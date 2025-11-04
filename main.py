@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import types
 from aiogram import Bot, Dispatcher, F
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, Text
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -100,7 +100,7 @@ async def send_all_channel_posts(chat_id: int):
 async def send_main_menu(chat_id: int):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🎁 Referal"), KeyboardButton(text="✉️ Screenshoot yuborish")]
+            [KeyboardButton(text="🎰 Baraban"), KeyboardButton(text="✉️ Screenshoot yuborish")]
         ],
         resize_keyboard=True
     )
@@ -301,26 +301,40 @@ async def check_subscription(callback: CallbackQuery):
 
 
 
-@dp.message(F.text == "🎁 Referal")
-async def referral_handler(message: Message):
+@dp.message(Text("🎰 Baraban"))
+async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
 
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
-    referral_link = f"https://t.me/vertualbola_bot?start={user_id}"
-    referred_count = get_referred_count(user_id)
 
-    text = (
-        f"🎁 Sizning referal linkingiz:\n"
-        f"<a href='{referral_link}'>{referral_link}</a>\n\n"
-        f"✅ Siz 3 tadan {referred_count} do‘stni taklif qildingiz!\n"
-        f"🆔 Telegram ID: {user.telegram_id}\n"
-        f"📱 Telefon raqam: {user.phone_number or 'Yo‘q'}\n"
-        f"📊 Status: {user.status.value} \n"
-        f"🔴 Eslatma agar 3 tadan ko'p do'stizni taklif qilmagan bo'lsangiz konkursda ishtirok eta olmaysiz! Barcha shart bilmoqchi bo'lsangiz /shartlar buyrug'ini yuboring!\n "
+    # 🔹 Inline tugma (havolali)
+    baraban_link = "https://kun.uz/"  # o'zingizning haqiqiy linkni kiriting
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="🎯 Barabanni ochish",
+                    url=baraban_link
+                )
+            ]
+        ]
     )
-    await message.answer(text=text, parse_mode="HTML")
+
+    # 🔹 Estetik va chiroyli formatlangan matn
+    text = (
+        f"<b>🎰 BARABAN O‘YINI</b>\n"
+        f"<i>Omadingizni sinab ko‘ring va sovg‘ani yutib oling!</i>\n\n"
+        f"👤 <b>Ism:</b> {user.fullname or 'Noma’lum'}\n"
+        f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id or 'Hozircha yo‘q'}</code>\n"
+        f"📞 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
+        f"📊 <b>Status:</b> {user.status.value}\n"
+        f"🔔 <b>O‘z DBBET ID raqamingizni barabanda ko‘rish uchun</b>\n"
+        f"pastdagi tugmani bosing 👇"
+    )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 @dp.message(F.text == "✉️ Screenshoot yuborish")
 async def start_send_message(message: Message, state: FSMContext):
