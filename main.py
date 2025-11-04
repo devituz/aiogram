@@ -541,7 +541,7 @@ async def message_user_callback(callback: CallbackQuery, state: FSMContext):
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
     # 🔹 Faqat ro'yxatda bor adminlargina xabar yubora oladi
-    if message.from_user.id not in braodcast_id_admin:
+    if message.from_user.id not in ADMIN_IDS:
         return
 
     data = await state.get_data()
