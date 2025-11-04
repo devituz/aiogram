@@ -320,8 +320,8 @@ async def baraban_handler(message: Message):
         )
     ]])
 
-    # DBBET ID — faqat bor bo‘lsa chiqadi
-    dbbet_line = f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else ""
+    # DBBET ID — bor bo'lsa ID, yo'q bo'lsa "ID yuborilmagan"
+    dbbet_line = f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
 
     # Status — o‘zbekcha
     if user.status.value == "new":
@@ -331,11 +331,11 @@ async def baraban_handler(message: Message):
     else:
         status = "❌ <b>Rad etilgan</b>"
 
+    # Text tayyorlash
     text = (
         f"🎉 <b>Sizga omad!</b>\n\n"
         f"👤 <b>Ism:</b> {user.fullname}\n"
         f"{dbbet_line}"
-        f"{f'🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
         f"📞 <b>Telefon:</b> {user.phone_number}\n"
         f"📊 <b>Status:</b> {status}\n\n"
         f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
