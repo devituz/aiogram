@@ -326,6 +326,13 @@ async def baraban_handler(message: Message):
         f"👤 <b>Ism:</b> {user.fullname}\n"
         f"{f'🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
         f"📞 <b>Telefon:</b> {user.phone_number}\n\n"
+        f"📊 <b>Status:</b> { 
+            '🆕 <b>Yangi foydalanuvchi</b>' 
+            if user.status.value == 'new' else 
+            '✅ <b>O‘yi ishtirokchisiz</b>' 
+            if user.status.value == 'accept' else 
+            '❌ <b>Rad etilgan</b>'
+        }\n\n"
         f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!",
         parse_mode="HTML",
         reply_markup=keyboard
