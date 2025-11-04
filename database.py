@@ -54,13 +54,13 @@ SessionLocal = sessionmaker(bind=engine)
 
 
 # 🔹 Foydalanuvchining DBBET ID sini yangilash
-def update_user_dbb_id(telegram_id, dbb_id):
-    session = SessionLocal()
-    user = session.query(TelegramUser).filter(TelegramUser.telegram_id == telegram_id).first()
-    if user:
-        user.dbbet_id = dbb_id
-        session.commit()
-    session.close()
+def update_user_dbb_id(tid, dbb_id):
+    s = SessionLocal()
+    u = s.query(TelegramUser).filter_by(telegram_id=tid).first()
+    if u:
+        u.dbbet_id = dbb_id
+        s.commit()
+    s.close()
 
 
 # 🔹 DB init
