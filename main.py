@@ -306,7 +306,7 @@ async def check_subscription(callback: CallbackQuery):
 
 
 # ——— BARABAN BUTTON (text) ———
-@router.message(F.text == "🎰 Baraban")
+@dp.message(F.text == "🎰 Baraban")
 async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
@@ -339,7 +339,7 @@ async def baraban_handler(message: Message):
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 # ——— BARABAN BUTTON (callback) ———
-@router.callback_query(F.data == "open_baraban")
+@dp.callback_query(F.data == "open_baraban")
 async def baraban_callback(callback: CallbackQuery):
     await callback.answer()  # close loading
     await baraban_handler(callback.message)  # reuse text handler
