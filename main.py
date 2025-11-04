@@ -26,7 +26,7 @@ from database import (
     add_referral,
     update_referral_subscribed,
     get_referred_count,
-    update_user_status
+    update_user_status, update_user_dbb_id
 )
 
 # 🔹 Bot sozlamalari
@@ -104,7 +104,7 @@ async def send_all_channel_posts(chat_id: int):
 async def send_main_menu(chat_id: int):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🎰 Baraban"), KeyboardButton(text="✉️ Screenshoot yuborish")]
+            [KeyboardButton(text="🎰 Baraban"), KeyboardButton(text="✉️ DBBET ID yuborish")]
         ],
         resize_keyboard=True
     )
@@ -344,147 +344,102 @@ async def baraban_handler(message: Message):
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 
-@dp.message(F.text == "✉️ Screenshoot yuborish")
-async def start_send_message(message: Message, state: FSMContext):
+
+# 🟢 Foydalanuvchi DBBET ID yuborish
+@dp.message(F.text == "✉️ DBBET ID yuborish")
+async def start_send_dbb_id(message: Message, state: FSMContext):
     if not await check_user_requirements(message):
         return
 
-    user_id = message.from_user.id
-    referred_count = get_referred_count(user_id)
+    user = get_user_by_telegram_id(message.from_user.id)
 
-    # Check if user has at least 5 referrals
-    if referred_count < 3:
-        await message.answer(
-            "⚠️ Screenshoot yuborish uchun kamida 3 ta do‘stni taklif qilgan bo‘lishingiz kerak!\n"
-            "🎁 Referal  tugmasini bosing. Do'stlarizni taklif qilish uchun.\n"
-            f"📊 Hozirda siz {referred_count} ta do‘st taklif qildingiz.\n"
-            "🔴 Yana do‘stlar taklif qiling va /shartlar buyrug‘i orqali shartlarni bilib oling!"
-        )
+    if user.status.value == "accept":
+        await message.answer("⚠️ Siz oldin ID yuborgansiz!")
         return
 
     await message.answer(
-        "📸 Iltimos, faqat rasm (screenshot) va unga izoh (caption) yuboring.\n\nTayyor bo‘lgach, '✅ Yuborish' tugmasini bosing.",
+        "🔢 Iltimos, faqat 14 xonali DBBET ID yuboring.",
         reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="✅ Yuborish"), KeyboardButton(text="❌ Bekor qilish")]],
+            keyboard=[[KeyboardButton(text="❌ Bekor qilish")]],
             resize_keyboard=True
         )
     )
-    await state.set_state(SendMessageState.waiting_for_photos)
-    await state.update_data(photos=[])
+    await state.set_state("waiting_for_dbb_id")
 
-@dp.message(SendMessageState.waiting_for_photos, F.photo)
-async def photo_handler(message: Message, state: FSMContext):
-    if not await check_user_requirements(message):
+
+# 🟢 DBBET ID qabul qilish
+@dp.message("waiting_for_dbb_id")
+async def dbb_id_handler(message: Message, state: FSMContext):
+    dbb_id = message.text.strip()
+
+    if dbb_id == "❌ Bekor qilish":
+        await message.answer("❌ Amal bekor qilindi.", reply_markup=ReplyKeyboardRemove())
         await state.clear()
         return
 
-    data = await state.get_data()
-    photos = data.get("photos", [])
-    caption = message.caption or "Matn biriktirilmagan."
-    photos.append({"file_id": message.photo[-1].file_id, "caption": caption})
-    await state.update_data(photos=photos)
-    await message.answer(f"📸 {len(photos)}-rasm qabul qilindi.")
-
-@dp.message(SendMessageState.waiting_for_photos, F.text & ~F.text.in_(["✅ Yuborish", "❌ Bekor qilish"]))
-async def text_message_warning(message: Message):
-    if not await check_user_requirements(message):
+    if not dbb_id.isdigit() or len(dbb_id) != 14:
+        await message.answer("⚠️ DBBET ID noto‘g‘ri! Iltimos, faqat 14 xonali raqam yuboring.")
         return
 
-    await message.answer(
-        "⚠️ Faqat rasm va unga izoh (caption) yuborishingiz mumkin! Iltimos, rasm yuboring."
-    )
-
-@dp.message(SendMessageState.waiting_for_photos, F.text == "✅ Yuborish")
-async def send_to_admin(message: Message, state: FSMContext):
-    if not await check_user_requirements(message):
-        await state.clear()
-        return
-
-    data = await state.get_data()
-    photos = data.get("photos", [])
     user = get_user_by_telegram_id(message.from_user.id)
     referred_count = get_referred_count(message.from_user.id)
-    user_id = message.from_user.id
 
-    if not photos:
-        await message.answer("⚠️ Hech qanday rasm yuborilmadi.")
-        return
-
-    izohlar = "\n".join([f"{i+1}️⃣ {photo['caption']}" for i, photo in enumerate(photos)])
-
+    # 🟢 Adminlarga yuborish
     caption = (
-        f"📩 <b>Yangi xabar:</b>\n"
+        f"📩 <b>Yangi DBBET ID:</b>\n"
         f"👤 <b>Foydalanuvchi:</b> {message.from_user.full_name}\n"
         f"💬 <b>Username:</b> @{message.from_user.username or 'yo‘q'}\n"
         f"📱 <b>Telefon:</b> {user.phone_number or 'yo‘q'}\n"
         f"🆔 <b>ID:</b> <code>{message.from_user.id}</code>\n"
         f"🤝 <b>Taklif qilingan do‘stlar:</b> {referred_count} ta\n"
-        f"🖼 <b>Rasmlar soni:</b> {len(photos)} ta\n"
-        f"✏️ <b>Izohlar:</b>\n{izohlar}"
+        f"🔢 <b>DBBET ID:</b> <code>{dbb_id}</code>"
     )
 
     inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"accept_user_{user_id}"),
-            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_user_{user_id}"),
+            InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"accept_user_{message.from_user.id}_{dbb_id}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_user_{message.from_user.id}"),
         ],
-        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"message_user_{user_id}")]
+        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"message_user_{message.from_user.id}")]
     ])
 
-    media_group = []
-    for i, photo in enumerate(photos):
-        if i == 0:
-            media_group.append(InputMediaPhoto(media=photo["file_id"], caption=caption, parse_mode="HTML"))
-        else:
-            media_group.append(InputMediaPhoto(media=photo["file_id"]))
-
-    # 🔹 Barcha adminlarga yuborish
     for admin_id in ADMIN_IDS:
         try:
-            await bot.send_media_group(chat_id=admin_id, media=media_group)
-            await bot.send_message(chat_id=admin_id, text="Amallar:", reply_markup=inline_keyboard)
+            await bot.send_message(chat_id=admin_id, text=caption, parse_mode="HTML", reply_markup=inline_keyboard)
         except Exception as e:
             print(f"⚠️ Admin {admin_id} ga yuborishda xatolik: {e}")
 
-    await message.answer("✅ Xabaringiz yuborildi!", reply_markup=ReplyKeyboardRemove())
-    await send_main_menu(message.chat.id)
+    await message.answer("✅ DBBET ID adminlarga yuborildi!", reply_markup=ReplyKeyboardRemove())
     await state.clear()
 
 
 @dp.callback_query(F.data.startswith("accept_user_"))
 async def accept_user_callback(callback: CallbackQuery):
-    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
     if callback.from_user.id not in ADMIN_IDS:
         await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
         return
 
-    user_id = int(callback.data.split("_")[2])
+    parts = callback.data.split("_")
+    user_id = int(parts[2])
+    dbb_id = parts[3] if len(parts) > 3 else None
+
+    # Statusni yangilash
     update_user_status(user_id, "accept")
+
+    # DBBET ID saqlash
+    if dbb_id:
+        update_user_dbb_id(user_id, dbb_id)
+
     user = get_user_by_telegram_id(user_id)
 
     await callback.answer("✅ Foydalanuvchi qabul qilindi!")
     await callback.message.edit_reply_markup(reply_markup=None)
 
-    # 🔹 Foydalanuvchiga xabar yuborish
     await bot.send_message(
         chat_id=user_id,
-        text=f"✅ Sizning so‘rovingiz admin tomonidan qabul qilindi!\n"
-             f"📌 Holat: <b>{user.status.value}</b>",
+        text=f"✅ Sizning so‘rovingiz admin tomonidan qabul qilindi!\n📌 Holat: <b>{user.status.value}</b>",
         parse_mode="HTML"
     )
-
-    # 🔹 Barcha adminlarga bildirish (ixtiyoriy, lekin foydali)
-    for admin_id in ADMIN_IDS:
-        if admin_id != callback.from_user.id:
-            try:
-                await bot.send_message(
-                    admin_id,
-                    f"👤 <b>{callback.from_user.full_name}</b> foydalanuvchini qabul qildi.\n"
-                    f"🆔 <code>{user_id}</code>",
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                print(f"⚠️ Admin {admin_id} ga xabar yuborilmadi: {e}")
 
 
 

@@ -74,6 +74,106 @@ async def is_subscribed(user_id: int) -> bool:
     return True
 
 
+
+
+# 🟢 Foydalanuvchi DBBET ID yuborish
+@dp.message(F.text == "✉️ DBBET ID yuborish")
+async def start_send_dbb_id(message: Message, state: FSMContext):
+    if not await check_user_requirements(message):
+        return
+
+    user = get_user_by_telegram_id(message.from_user.id)
+
+    if user.status.value == "accept":
+        await message.answer("⚠️ Siz oldin ID yuborgansiz!")
+        return
+
+    await message.answer(
+        "🔢 Iltimos, faqat 14 xonali DBBET ID yuboring.",
+        reply_markup=ReplyKeyboardMarkup(
+            keyboard=[[KeyboardButton(text="❌ Bekor qilish")]],
+            resize_keyboard=True
+        )
+    )
+    await state.set_state("waiting_for_dbb_id")
+
+
+# 🟢 DBBET ID qabul qilish
+@dp.message("waiting_for_dbb_id")
+async def dbb_id_handler(message: Message, state: FSMContext):
+    dbb_id = message.text.strip()
+
+    if dbb_id == "❌ Bekor qilish":
+        await message.answer("❌ Amal bekor qilindi.", reply_markup=ReplyKeyboardRemove())
+        await state.clear()
+        return
+
+    if not dbb_id.isdigit() or len(dbb_id) != 14:
+        await message.answer("⚠️ DBBET ID noto‘g‘ri! Iltimos, faqat 14 xonali raqam yuboring.")
+        return
+
+    user = get_user_by_telegram_id(message.from_user.id)
+    referred_count = get_referred_count(message.from_user.id)
+
+    # 🟢 Adminlarga yuborish
+    caption = (
+        f"📩 <b>Yangi DBBET ID:</b>\n"
+        f"👤 <b>Foydalanuvchi:</b> {message.from_user.full_name}\n"
+        f"💬 <b>Username:</b> @{message.from_user.username or 'yo‘q'}\n"
+        f"📱 <b>Telefon:</b> {user.phone_number or 'yo‘q'}\n"
+        f"🆔 <b>ID:</b> <code>{message.from_user.id}</code>\n"
+        f"🤝 <b>Taklif qilingan do‘stlar:</b> {referred_count} ta\n"
+        f"🔢 <b>DBBET ID:</b> <code>{dbb_id}</code>"
+    )
+
+    inline_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"accept_user_{message.from_user.id}_{dbb_id}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_user_{message.from_user.id}"),
+        ],
+        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"message_user_{message.from_user.id}")]
+    ])
+
+    for admin_id in ADMIN_IDS:
+        try:
+            await bot.send_message(chat_id=admin_id, text=caption, parse_mode="HTML", reply_markup=inline_keyboard)
+        except Exception as e:
+            print(f"⚠️ Admin {admin_id} ga xabar yuborishda xatolik: {e}")
+
+    await message.answer("✅ DBBET ID adminlarga yuborildi!", reply_markup=ReplyKeyboardRemove())
+    await state.clear()
+
+
+# 🟢 Admin accept tugmasi
+@dp.callback_query(F.data.startswith("accept_user_"))
+async def accept_user_callback(callback: CallbackQuery):
+    if callback.from_user.id not in ADMIN_IDS:
+        await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
+        return
+
+    # DBBET ID ham qabul qilinishi mumkin
+    parts = callback.data.split("_")
+    user_id = int(parts[2])
+    dbb_id = parts[3] if len(parts) > 3 else None
+
+    update_user_status(user_id, "accept")
+    user = get_user_by_telegram_id(user_id)
+
+    # 🔹 DBBET ID saqlash faqat accept bo‘lganda
+    if dbb_id:
+        user.dbbet_id = dbb_id
+        save_user(user)
+
+    await callback.answer("✅ Foydalanuvchi qabul qilindi!")
+    await callback.message.edit_reply_markup(reply_markup=None)
+
+    await bot.send_message(
+        chat_id=user_id,
+        text=f"✅ Sizning so‘rovingiz admin tomonidan qabul qilindi!\n📌 Holat: <b>{user.status.value}</b>",
+        parse_mode="HTML"
+    )
+
+
 # ==========================================================
 # 🔹 Kanal postlarini yuborish
 # ==========================================================
