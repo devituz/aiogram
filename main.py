@@ -306,37 +306,38 @@ async def check_subscription(callback: CallbackQuery):
 
 
 # ——— BARABAN BUTTON (text) ———
-@dp.message(F.text == "🎰 Baraban")
+@dp.message(F.text == "Baraban")
 async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
 
     user = get_user_by_telegram_id(message.from_user.id)
 
-    # 🔹 WebApp ochish tugmasi
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
-            text="🎰 BARABANNI OCHISH",
+            text="BARABANNI OCHISH",
             web_app=types.WebAppInfo(url="https://winproline.ru/baraban/")
         )
     ]])
 
-    await message.answer(
-        f"🎉 <b>Sizga omad!</b>\n\n"
-        f"👤 <b>Ism:</b> {user.fullname}\n"
-        f"{f'🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
-        f"📞 <b>Telefon:</b> {user.phone_number}\n\n"
-        f"📊 <b>Status:</b> { 
-            '🆕 <b>Yangi foydalanuvchi</b>' 
-            if user.status.value == 'new' else 
-            '✅ <b>O‘yi ishtirokchisiz</b>' 
-            if user.status.value == 'accept' else 
-            '❌ <b>Rad etilgan</b>'
-        }\n\n"
-        f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!",
-        parse_mode="HTML",
-        reply_markup=keyboard
+    # STATUSNI O‘ZBEKCHA QILDIK
+    if user.status.value == "new":
+        status_text = "Yangi foydalanuvchi"
+    elif user.status.value == "accept":
+        status_text = "O‘yinda ishtirokchisiz"
+    else:
+        status_text = "Rad etilgan"
+
+    text = (
+        f"<b>Sizga omad!</b>\n\n"
+        f"<b>Ism:</b> {user.fullname}\n"
+        f"{f'<b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
+        f"<b>Telefon:</b> {user.phone_number}\n"
+        f"<b>Status:</b> {status_text}\n\n"
+        f"Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
     )
+
+    await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 
 @dp.message(F.text == "✉️ Screenshoot yuborish")
