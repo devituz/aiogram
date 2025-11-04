@@ -349,7 +349,6 @@ async def baraban_handler(message: Message):
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
 
 
-
 # ---------- DBBET ID ----------
 @dp.message(F.text == "✉️ DBBET ID yuborish")
 async def start_dbb_id(message: Message, state: FSMContext):
@@ -357,60 +356,65 @@ async def start_dbb_id(message: Message, state: FSMContext):
         return
     user = get_user_by_telegram_id(message.from_user.id)
     if user.status.value == "accept":
-        await message.answer("Siz allaqachon yuborgansiz!")
+        await message.answer("⚠️ Siz allaqachon yuborgansiz!")
         return
 
     await message.answer(
-        "14 xonali DBBET ID yuboring:",
+        "🔢 14 xonali DBBET ID yuboring:",
         reply_markup=ReplyKeyboardMarkup(
-            keyboard=[[KeyboardButton(text="Bekor qilish")]],
+            keyboard=[[KeyboardButton(text="❌ Bekor qilish")]],
             resize_keyboard=True
         )
     )
-    await state.set_state(DBBetStates.waiting_for_dbb_id)   # FIXED
+    await state.set_state(DBBetStates.waiting_for_dbb_id)
 
 
-@dp.message(DBBetStates.waiting_for_dbb_id)   # FIXED
+@dp.message(DBBetStates.waiting_for_dbb_id)
 async def receive_dbb_id(message: Message, state: FSMContext):
     txt = message.text.strip()
-    if txt == "Bekor qilish":
-        await message.answer("Bekor qilindi.", reply_markup=ReplyKeyboardRemove())
-        await send_main_menu(message.chat.id)  # <--- YANGI QATOR
+
+    if txt == "❌ Bekor qilish":
+        await message.answer("❌ Bekor qilindi", reply_markup=ReplyKeyboardRemove())
+        await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
         await state.clear()
         return
 
     if not (txt.isdigit() and len(txt) == 14):
-        await message.answer("14 ta raqam bo‘lishi kerak!")
+        await message.answer("⚠️ Xato! Faqat 14 ta raqam yuboring.")
         return
 
     user = get_user_by_telegram_id(message.from_user.id)
     ref_cnt = get_referred_count(message.from_user.id)
 
     caption = (
-        f"<b>Yangi DBBET ID</b>\n"
-        f"Ism: {message.from_user.full_name}\n"
-        f"Username: @{message.from_user.username or 'yo‘q'}\n"
-        f"Telefon: {user.phone_number}\n"
-        f"ID: <code>{message.from_user.id}</code>\n"
-        f"Do‘stlar: {ref_cnt}\n"
-        f"DBBET: <code>{txt}</code>"
+        f"<b>📩 Yangi DBBET ID</b>\n\n"
+        f"👤 <b>Ism:</b> {message.from_user.full_name}\n"
+        f"📱 <b>Telefon:</b> {user.phone_number}\n"
+        f"🆔 <b>TG ID:</b> <code>{message.from_user.id}</code>\n"
+        f"🤝 <b>Do‘stlari:</b> {ref_cnt} ta\n"
+        f"🔢 <b>DBBET ID:</b> <code>{txt}</code>"
     )
+
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Qabul qilish", callback_data=f"acc_{message.from_user.id}_{txt}"),
-            InlineKeyboardButton(text="Rad etish", callback_data=f"rej_{message.from_user.id}")
+            InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"acc_{message.from_user.id}_{txt}"),
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"rej_{message.from_user.id}")
         ],
-        [InlineKeyboardButton(text="Xabar yuborish", callback_data=f"msg_{message.from_user.id}")]
+        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"msg_{message.from_user.id}")]
     ])
 
     for adm in ADMIN_IDS:
         try:
             await bot.send_message(adm, caption, parse_mode="HTML", reply_markup=kb)
-        except:
-            pass
+        except Exception as e:
+            print(f"Admin {adm} ga yuborishda xato: {e}")
 
-    await message.answer("ID adminlarga yuborildi!", reply_markup=ReplyKeyboardRemove())
-    await send_main_menu(message.chat.id)  # <--- YANGI QATOR
+    await message.answer(
+        "✅ ID muvaffaqiyatli adminlarga yuborildi!\n"
+        "Javob kelguncha kutib turing...",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
     await state.clear()
 
 
