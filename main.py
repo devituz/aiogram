@@ -1,9 +1,7 @@
 import asyncio
 from aiogram import types
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher, F, Router
 from aiogram.filters import CommandStart, Command
-from aiogram.filters.text import Text
-
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -102,7 +100,7 @@ async def send_all_channel_posts(chat_id: int):
 async def send_main_menu(chat_id: int):
     keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [KeyboardButton(text="🎰 Baraban"), KeyboardButton(text="✉️ Screenshoot yuborish")]
+            [KeyboardButton(text="🎁 Referal"), KeyboardButton(text="✉️ Screenshoot yuborish")]
         ],
         resize_keyboard=True
     )
@@ -303,7 +301,8 @@ async def check_subscription(callback: CallbackQuery):
 
 
 
-@dp.message(Text("🎰 Baraban"))
+# ——— BARABAN BUTTON (text) ———
+@router.message(F.text == "🎰 Baraban")
 async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
@@ -311,32 +310,35 @@ async def baraban_handler(message: Message):
     user_id = message.from_user.id
     user = get_user_by_telegram_id(user_id)
 
-    # 🔹 Inline tugma (havolali)
-    baraban_link = "https://kun.uz/"  # o'zingizning haqiqiy linkni kiriting
+    baraban_link = "https://kun.uz/"  # o‘zgartiring
+
     keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="🎯 Barabanni ochish",
-                    url=baraban_link
-                )
-            ]
-        ]
+        inline_keyboard=[[
+            InlineKeyboardButton(
+                text="🎯 Barabanni ochish",
+                url=baraban_link
+            )
+        ]]
     )
 
-    # 🔹 Estetik va chiroyli formatlangan matn
     text = (
         f"<b>🎰 BARABAN O‘YINI</b>\n"
         f"<i>Omadingizni sinab ko‘ring va sovg‘ani yutib oling!</i>\n\n"
         f"👤 <b>Ism:</b> {user.fullname or 'Noma’lum'}\n"
-        f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id or 'Hozircha yo‘q'}</code>\n"
-        f"📞 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
-        f"📊 <b>Status:</b> {user.status.value}\n"
+        f"🆔 <b>DBBET ID:</b> <code>{getattr(user, 'dbbet_id', 'Hozircha yo‘q')}</code>\n"
+        f"📞 <b>Telefon:</b> {getattr(user, 'phone_number', 'Yo‘q')}\n"
+        f"📊 <b>Status:</b> {getattr(user.status, 'value', user.status) if hasattr(user, 'status') else 'Noma’lum'}\n\n"
         f"🔔 <b>O‘z DBBET ID raqamingizni barabanda ko‘rish uchun</b>\n"
         f"pastdagi tugmani bosing 👇"
     )
 
     await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
+
+# ——— BARABAN BUTTON (callback) ———
+@router.callback_query(F.data == "open_baraban")
+async def baraban_callback(callback: CallbackQuery):
+    await callback.answer()  # close loading
+    await baraban_handler(callback.message)  # reuse text handler
 
 @dp.message(F.text == "✉️ Screenshoot yuborish")
 async def start_send_message(message: Message, state: FSMContext):
