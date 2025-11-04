@@ -397,9 +397,9 @@ async def receive_dbb_id(message: Message, state: FSMContext):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"acc_{message.from_user.id}_{txt}"),
-            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"rej_{message.from_user.id}")
+            InlineKeyboardButton(text="❌ Rad etish", callback_data=f"rej_{message.from_user.id}_0"),
         ],
-        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"msg_{message.from_user.id}")]
+        [InlineKeyboardButton(text="✉️ Xabar yuborish", callback_data=f"msg_{message.from_user.id}_0")]
     ])
 
     for adm in ADMIN_IDS:
@@ -416,90 +416,66 @@ async def receive_dbb_id(message: Message, state: FSMContext):
     await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
     await state.clear()
 
-
 @dp.callback_query(F.data.startswith("acc_"))
 async def accept(cb: CallbackQuery):
     if cb.from_user.id not in ADMIN_IDS:
-        return await cb.answer("Ruxsat yo‘q", show_alert=True)
-    _, uid, dbb = cb.data.split("_")
-    uid = int(uid)
-    update_user_status(uid, "accept")
-    update_user_dbb_id(uid, int(dbb))
-    await cb.answer("Qabul qilindi")
-    await cb.message.edit_reply_markup(reply_markup=None)
-    await bot.send_message(uid, "So‘rovingiz qabul qilindi!")
+        return await cb.answer("❌ Ruxsat yo‘q!", show_alert=True)
 
+    parts = cb.data.split("_")
+    user_id = int(parts[1])
+    dbb_id = parts[2]  # 0 emas, real ID
+
+    update_user_status(user_id, "accept")
+    update_user_dbb_id(user_id, int(dbb_id))
+
+    await cb.answer("✅ Qabul qilindi")
+    await cb.message.edit_reply_markup(reply_markup=None)
+    await bot.send_message(user_id, "🎉 So‘rovingiz qabul qilindi!\nSiz endi o‘yinda ishtirok etasiz!")
+    await notify_other_admins(cb, user_id, "✅ qabul qildi")
 
 
 @dp.callback_query(F.data.startswith("rej_"))
-async def reject_user_callback(callback: CallbackQuery):
-    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
-    if callback.from_user.id not in ADMIN_IDS:
-        await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
-        return
+async def reject(cb: CallbackQuery):
+    if cb.from_user.id not in ADMIN_IDS:
+        return await cb.answer("❌ Ruxsat yo‘q!", show_alert=True)
 
-    user_id = int(callback.data.split("_")[2])
+    user_id = int(cb.data.split("_")[1])
     update_user_status(user_id, "rejected")
-    user = get_user_by_telegram_id(user_id)
 
-    await callback.answer("❌ Foydalanuvchi rad etildi!")
-    await callback.message.edit_reply_markup(reply_markup=None)
+    await cb.answer("❌ Rad etildi")
+    await cb.message.edit_reply_markup(reply_markup=None)
+    await bot.send_message(user_id, "❌ So‘rovingiz rad etildi.\nSabab: Noto‘g‘ri yoki takroriy ID.")
+    await notify_other_admins(cb, user_id, "❌ rad etdi")
 
-    # 🔹 Foydalanuvchiga xabar yuborish
-    await bot.send_message(
-        chat_id=user_id,
-        text=f"❌ Sizning so‘rovingiz admin tomonidan rad etildi!\n"
-             f"📌 Holat: <b>{user.status.value}</b>",
-        parse_mode="HTML"
-    )
 
-    # 🔹 Qolgan adminlarga kim rad etganini bildirish (ixtiyoriy)
+async def notify_other_admins(cb: CallbackQuery, user_id: int, action: str):
     for admin_id in ADMIN_IDS:
-        if admin_id != callback.from_user.id:
+        if admin_id != cb.from_user.id:
             try:
                 await bot.send_message(
                     admin_id,
-                    f"🚫 <b>{callback.from_user.full_name}</b> foydalanuvchini rad etdi.\n"
-                    f"🆔 <code>{user_id}</code>",
+                    f"ℹ️ <b>{cb.from_user.full_name}</b> {action}\n"
+                    f"🆔 Foydalanuvchi: <code>{user_id}</code>",
                     parse_mode="HTML"
                 )
-            except Exception as e:
-                print(f"⚠️ Admin {admin_id} ga xabar yuborilmadi: {e}")
-
+            except:
+                pass
 
 @dp.callback_query(F.data.startswith("msg_"))
-async def message_user_callback(callback: CallbackQuery, state: FSMContext):
-    # 🔹 Faqat ro'yxatda bor adminlargina bu amalni bajara oladi
-    if callback.from_user.id not in ADMIN_IDS:
-        await callback.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!", show_alert=True)
-        return
+async def send_message_mode(cb: CallbackQuery, state: FSMContext):
+    if cb.from_user.id not in ADMIN_IDS:
+        return await cb.answer("❌ Ruxsat yo‘q!", show_alert=True)
 
-    user_id = int(callback.data.split("_")[2])
-
-    # 🔹 Holatni saqlaymiz
+    user_id = int(cb.data.split("_")[1])
     await state.set_state(AdminMessageState.waiting_for_message)
     await state.update_data(target_user_id=user_id)
 
-    # 🔹 Adminni xabar yozishga chaqiramiz
-    await callback.message.answer(
-        f"✉️ Foydalanuvchi uchun xabar yozing:\n"
-        f"👤 ID: <code>{user_id}</code>",
+    await cb.message.answer(
+        f"✉️ <b>Xabar yozing:</b>\n"
+        f"👤 Foydalanuvchi ID: <code>{user_id}</code>",
         parse_mode="HTML"
     )
-    await callback.answer("Xabar yuborish rejimi yoqildi ✅")
-
-    # 🔹 Qolgan adminlarga kim “xabar yuborish rejimi”ni yoqqanini bildiradi (ixtiyoriy)
-    for admin_id in ADMIN_IDS:
-        if admin_id != callback.from_user.id:
-            try:
-                await bot.send_message(
-                    admin_id,
-                    f"✉️ <b>{callback.from_user.full_name}</b> foydalanuvchi "
-                    f"<code>{user_id}</code> ga xabar yozmoqda.",
-                    parse_mode="HTML"
-                )
-            except Exception as e:
-                print(f"⚠️ Admin {admin_id} ga bildirish yuborilmadi: {e}")
+    await cb.answer("Xabar rejimi yoqildi")
 
 
 
