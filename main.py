@@ -311,38 +311,26 @@ async def baraban_handler(message: Message):
     if not await check_user_requirements(message):
         return
 
-    user_id = message.from_user.id
-    user = get_user_by_telegram_id(user_id)
+    user = get_user_by_telegram_id(message.from_user.id)
 
-    baraban_link = "https://kun.uz/"  # o‘zgartiring
+    # 🔹 WebApp ochish tugmasi
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(
+            text="🎰 BARABANNI OCHISH",
+            web_app=types.WebAppInfo(url="https://winproline.ru/baraban/")
+        )
+    ]])
 
-    keyboard = InlineKeyboardMarkup(
-        inline_keyboard=[[
-            InlineKeyboardButton(
-                text="🎯 Barabanni ochish",
-                url=baraban_link
-            )
-        ]]
+    await message.answer(
+        f"🎉 <b>Sizga omad!</b>\n\n"
+        f"👤 <b>Ism:</b> {user.fullname}\n"
+        f"{f'🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\\n' if user.dbbet_id else ''}"
+        f"📞 <b>Telefon:</b> {user.phone_number}\n\n"
+        f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!",
+        parse_mode="HTML",
+        reply_markup=keyboard
     )
 
-    text = (
-        f"<b>🎰 BARABAN O‘YINI</b>\n"
-        f"<i>Omadingizni sinab ko‘ring va sovg‘ani yutib oling!</i>\n\n"
-        f"👤 <b>Ism:</b> {user.fullname or 'Noma’lum'}\n"
-        f"🆔 <b>DBBET ID:</b> <code>{getattr(user, 'dbbet_id', 'Hozircha yo‘q')}</code>\n"
-        f"📞 <b>Telefon:</b> {getattr(user, 'phone_number', 'Yo‘q')}\n"
-        f"📊 <b>Status:</b> {getattr(user.status, 'value', user.status) if hasattr(user, 'status') else 'Noma’lum'}\n\n"
-        f"🔔 <b>O‘z DBBET ID raqamingizni barabanda ko‘rish uchun</b>\n"
-        f"pastdagi tugmani bosing 👇"
-    )
-
-    await message.answer(text, parse_mode="HTML", reply_markup=keyboard)
-
-# ——— BARABAN BUTTON (callback) ———
-@dp.callback_query(F.data == "open_baraban")
-async def baraban_callback(callback: CallbackQuery):
-    await callback.answer()  # close loading
-    await baraban_handler(callback.message)  # reuse text handler
 
 @dp.message(F.text == "✉️ Screenshoot yuborish")
 async def start_send_message(message: Message, state: FSMContext):
