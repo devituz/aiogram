@@ -33,6 +33,7 @@ from database import (
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 
 ADMIN_IDS = [7321341340, 6323360222, 7656406127]
+braodcast_id_admin = [6323360222]
 
 
 CHANNELS = [
@@ -540,7 +541,7 @@ async def message_user_callback(callback: CallbackQuery, state: FSMContext):
 @dp.message(AdminMessageState.waiting_for_message)
 async def admin_send_message_handler(message: Message, state: FSMContext):
     # 🔹 Faqat ro'yxatda bor adminlargina xabar yubora oladi
-    if message.from_user.id not in ADMIN_IDS:
+    if message.from_user.id not in braodcast_id_admin:
         return
 
     data = await state.get_data()
@@ -647,7 +648,7 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
 @dp.message(Command("broadcast"))
 async def broadcast_handler(message: types.Message, state: FSMContext):
-    if message.from_user.id not in ADMIN_IDS:
+    if message.from_user.id not in braodcast_id_admin:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
@@ -660,7 +661,7 @@ async def broadcast_handler(message: types.Message, state: FSMContext):
 @dp.message(AdminMessageState.waiting_for_broadcast)
 async def broadcast_message_handler(message: types.Message, state: FSMContext):
     admin_id = message.from_user.id
-    if admin_id not in ADMIN_IDS:
+    if admin_id not in braodcast_id_admin:
         return
 
     users = get_all_users()
