@@ -781,8 +781,7 @@ async def statistika_handler(message: Message):
                 f"   🆔 <b>Telegram ID:</b> {user.telegram_id}\n"
                 f"{dbbet_line}"
                 f"   📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
-                f"   📊 <b>Status:</b> {user.status.value}\n"
-                f"   🤝 <b>Taklif qilingan do‘stlar:</b> {referrals_count} ta\n\n"
+                f"   📊 <b>Status:</b> {user.status.value}\n\n"
             )
 
     await message.answer(stats_message, parse_mode="HTML")
