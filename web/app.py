@@ -5,7 +5,7 @@ import enum
 
 
 # 🔹 Database setup
-DATABASE_URL = "sqlite:///database.db"
+DATABASE_URL = "sqlite:////var/www/html/database.db"
 Base = declarative_base()
 
 

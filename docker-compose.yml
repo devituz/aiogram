@@ -19,7 +19,7 @@ services:
     container_name: flask_web
     restart: always
     volumes:
-      - ./database.db:/var/www/html/web/database.db
+      - ./database.db:/var/www/html/database.db
     working_dir: /var/www/html/web
     ports:
       - "5000:5000"

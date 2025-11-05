@@ -1,11 +1,11 @@
-FROM python:3.11-slim
+    FROM python:3.11-slim
 
-WORKDIR /var/www/html/web
+    WORKDIR /var/www/html/web
 
-COPY . .
+    COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
+    RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 5000
+    EXPOSE 5000
 
-CMD ["python", "app.py"]
+    CMD ["python", "app.py"]
