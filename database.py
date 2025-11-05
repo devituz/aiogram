@@ -146,12 +146,18 @@ def get_referred_count(user_id):
     return count
 
 # 🔹 Telegram ID bo‘yicha user olish
+def get_user_by_telegram_id(telegram_id):
+    session = SessionLocal()
+    user = session.query(TelegramUser).filter(TelegramUser.telegram_id == telegram_id).first()
+    session.close()
+    return user
+
+
 def get_user_by_dbb_id(dbb_id: int):
     session = SessionLocal()
     user = session.query(TelegramUser).filter(TelegramUser.dbbet_id == dbb_id).first()
     session.close()
     return user
-
 
 # 🔹 Foydalanuvchining barcha referral’larini olish (faqat obuna bo‘lganlar)
 def get_all_referred_users(user_id):
