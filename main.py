@@ -390,7 +390,8 @@ async def receive_dbb_id(message: Message, state: FSMContext):
         f"👤 <b>Ism:</b> {message.from_user.full_name}\n"
         f"📱 <b>Telefon:</b> {user.phone_number}\n"
         f"🆔 <b>TG ID:</b> <code>{message.from_user.id}</code>\n"
-        f"🤝 <b>Do‘stlari:</b> {ref_cnt} ta\n"
+        # f"🤝 <b>Do‘stlari:</b> {ref_cnt} ta\n"
+        f"📊 <b>Status:</b> {user.status}\n"
         f"🔢 <b>DBBET ID:</b> <code>{txt}</code>"
     )
 
