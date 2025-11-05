@@ -635,6 +635,9 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     await message.answer(f"📤 {len(users)} ta foydalanuvchiga xabar yuborish boshlandi...")
 
     for user in users:
+        if success_count >= 1300:
+            await message.answer("Muvafaqiyatli")
+            break
         try:
             # 🔸 Xabar yuborilgan foydalanuvchilarni tashlab ketamiz
             if user.sms:
