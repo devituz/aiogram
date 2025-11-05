@@ -27,6 +27,7 @@ class TelegramUser(Base):
     username = Column(String, nullable=True)
     fullname = Column(String, nullable=True)
     status = Column(Enum(UserStatus), default=UserStatus.new, nullable=False)
+    dbbet_id = Column(Integer, nullable=True)
 
     # 🔹 User tomonidan qilingan referrals
     referrals = relationship(
@@ -81,7 +82,7 @@ def get_accepted_users():
 
 
 # 🔹 Index route
-@app.route('/')
+@app.route('/bu-link-shunchaki-yashirin-shunga-uzun-qildim')
 def index():
     # Fetch accepted users
     accepted_users = get_accepted_users()
@@ -95,6 +96,7 @@ def index():
             'phone_number': user.phone_number or 'Yo‘q',
             'username': f"@{user.username}" if user.username else 'Yo‘q',
             'fullname': user.fullname or 'Yo‘q',
+            'dbbet_id': user.dbbet_id or 'Yo‘q',
             'status': user.status.value,
             'referrals_count': referrals_count
         })

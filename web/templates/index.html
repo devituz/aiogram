@@ -89,15 +89,18 @@
    "6166993965"
   ];
 
-  const telegramIds = [
+  // 🟢 Har bir user uchun: telegram_id va dbbet_id ni olib kelamiz
+  const userMap = [
     {% for user in users %}
-      "{{ user.telegram_id }}"{% if not loop.last %},{% endif %}
+      { telegram_id: "{{ user.telegram_id }}", dbbet_id: "{{ user.dbbet_id }}" }{% if not loop.last %},{% endif %}
     {% endfor %}
   ];
 
-  console.log("Server IDlar:", telegramIds);
+  // 🟢 Barabanda ko‘rinadigan ID — faqat dbbet_id
+  const displayIds = userMap.map(u => u.dbbet_id).filter(Boolean);
 
-  let items = [...new Set([...telegramIds.filter(Boolean), ...FRIENDS_IDS])];
+  // 🔹 Foydalanilayotgan (vizual) IDlar
+  let items = [...new Set([...displayIds.filter(Boolean), ...FRIENDS_IDS])];
 
   let hiddenWinners = JSON.parse(sessionStorage.getItem('hiddenWinners') || '[]');
   items = items.filter(id => !hiddenWinners.includes(id));
@@ -167,7 +170,7 @@
     }
 
     const slice = (Math.PI*2)/items.length;
-    const pointerAngle = -Math.PI/2;               // 12 o’clock
+    const pointerAngle = -Math.PI/2;
     const targetAngle = pointerAngle - (targetIdx*slice + slice/2);
     const extraSpins = 8;
     const totalRotation = targetAngle - extraSpins*(Math.PI*2);
@@ -221,12 +224,16 @@
 
       const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
 
+      // 🟢 G‘olibning dbbet_id orqali telegram_id topamiz:
+      const winnerObj = userMap.find(u => u.dbbet_id === winner);
+      const telegramIdToSend = winnerObj ? winnerObj.telegram_id : winner;
+
       try {
         // G‘olibga xabar
         await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: winner, text: MESSAGE_TEXT })
+          body: JSON.stringify({ chat_id: telegramIdToSend, text: MESSAGE_TEXT })
         });
 
         // Har bir admin'ga xabar
@@ -238,7 +245,7 @@
           });
         }
 
-        console.log(`Xabar yuborildi: ${winner}`);
+        console.log(`Xabar yuborildi: ${telegramIdToSend}`);
       } catch (err) {
         console.error("Xabar yuborishda xatolik:", err);
       }
@@ -250,6 +257,7 @@
 
   drawWheel();
 </script>
+
 
 </body>
 </html>
