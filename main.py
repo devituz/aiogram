@@ -378,7 +378,7 @@ async def receive_dbb_id(message: Message, state: FSMContext):
         await state.clear()
         return
 
-    if not (txt.isdigit() and len(txt) == 14):
+    if not (txt.isdigit() and 1 <= len(txt) <= 14):
         await message.answer("⚠️ Xato! Faqat 14 ta raqam yuboring.")
         return
 
