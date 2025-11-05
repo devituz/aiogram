@@ -617,18 +617,25 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     if admin_id not in ADMIN_IDS:
         return
 
+    # 🔹 Faqat sms=False bo‘lgan foydalanuvchilarni olamiz
     users = get_users_for_broadcast()
     if not users:
-        await message.answer("❌ Hali xabar olmagan foydalanuvchilar topilmadi.")
+        await message.answer("❌ Hali xabar olmagan foydalanuvchilar topilmadi yoki xabar allaqachon yuborilgan.")
         await state.clear()
         return
 
     success_count = 0
     error_count = 0
+
     await message.answer(f"📤 {len(users)} ta foydalanuvchiga xabar yuborish boshlandi...")
 
     for user in users:
         try:
+            # 🔸 Xabar yuborilgan foydalanuvchilarni tashlab ketamiz
+            if user.sms:
+                continue
+
+            # 🔹 Xabar yuborish turlari
             if message.text:
                 await bot.send_message(
                     chat_id=user.telegram_id,
@@ -663,9 +670,10 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
 
             # ✅ Xabar yuborilgan userni sms=True qilamiz
             set_user_sms_status(user.telegram_id, True)
-
             success_count += 1
-            await asyncio.sleep(0.05)
+
+            # 🕐 Spam blokdan saqlanish uchun
+            await asyncio.sleep(0.3)
 
         except Exception as e:
             error_count += 1
@@ -673,10 +681,13 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
 
     await message.answer(
         f"📢 Xabar yuborish yakunlandi!\n"
-        f"✅ {success_count} ta foydalanuvchiga muvaffaqiyatli yuborildi\n"
+        f"✅ {success_count} ta foydalanuvchiga yuborildi\n"
         f"❌ {error_count} ta foydalanuvchida xato"
     )
+
+    # 🔒 Broadcast tugagach, keyingi safar qayta yuborish bloklanadi
     await state.clear()
+
 
 
 # ==== 2. BIR FOYDALANUVCHIGA XABAR YUBORISH ====

@@ -108,14 +108,22 @@ def get_users_for_broadcast():
     return users
 
 
-# 🔹 Foydalanuvchining sms statusini yangilash (True yoki False)
 def set_user_sms_status(telegram_id: int, value: bool = True):
     session = SessionLocal()
-    user = session.query(TelegramUser).filter(TelegramUser.telegram_id == telegram_id).first()
-    if user:
-        user.sms = value
-        session.commit()
-    session.close()
+    try:
+        user = session.query(TelegramUser).filter(TelegramUser.telegram_id == int(telegram_id)).first()
+        if user:
+            user.sms = value
+            session.add(user)
+            session.commit()
+        else:
+            print(f"⚠️ User topilmadi: {telegram_id}")
+    except Exception as e:
+        print(f"❌ set_user_sms_status xato: {e}")
+        session.rollback()
+    finally:
+        session.close()
+
 
 
 def reset_all_sms():
