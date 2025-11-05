@@ -360,7 +360,7 @@ async def start_dbb_id(message: Message, state: FSMContext):
         return
 
     await message.answer(
-        "🔢 14 xonali DBBET ID yuboring:",
+        "🔢 DBBET ID yuboring:",
         reply_markup=ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="❌ Bekor qilish")]],
             resize_keyboard=True
