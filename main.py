@@ -26,14 +26,14 @@ from database import (
     add_referral,
     update_referral_subscribed,
     get_referred_count,
-    update_user_status, update_user_dbb_id
+    update_user_status, update_user_dbb_id, get_user_by_dbb_id
 )
 
 # 🔹 Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 
 ADMIN_IDS = [7321341340, 6323360222, 7656406127]
-braodcast_id_admin = [6323360222]
+braodcast_id_admin = [7321341340]
 
 
 CHANNELS = [
@@ -803,16 +803,17 @@ async def user_info_handler(message: Message):
 
     args = message.text.split(maxsplit=1)
     if len(args) < 2:
-        await message.answer("⚠️ Foydalanuvchi Telegram ID sini kiriting.\nMisol: /user_info 123456789")
+        await message.answer("⚠️ Foydalanuvchi DBBET ID sini kiriting.\nMisol: /user_info 123456")
         return
 
     try:
-        target_id = int(args[1])
+        target_dbb_id = int(args[1])
     except ValueError:
-        await message.answer("❌ ID faqat raqam bo‘lishi kerak!")
+        await message.answer("❌ DBBET ID faqat raqam bo‘lishi kerak!")
         return
 
-    user = get_user_by_telegram_id(target_id)
+    # ✅ DBBET ID orqali foydalanuvchini olish
+    user = get_user_by_dbb_id(target_dbb_id)
     if not user:
         await message.answer("❌ Bunday foydalanuvchi bazada topilmadi.")
         return
@@ -827,10 +828,12 @@ async def user_info_handler(message: Message):
         f"💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
         f"📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
         f"📊 <b>Status:</b> {user.status.value}\n"
+        f"🔢 <b>DBBET ID:</b> <code>{user.dbbet_id or 'Yo‘q'}</code>\n"
         f"🤝 <b>Taklif qilgan do‘stlar soni:</b> {referred_count}\n"
     )
 
     await message.answer(text, parse_mode="HTML")
+
 
 
 @dp.message(SendMessageState.waiting_for_photos, F.text == "❌ Bekor qilish")
