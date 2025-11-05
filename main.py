@@ -157,7 +157,7 @@ async def check_user_requirements(message: Message) -> bool:
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
         await message.answer(
-            "⚠️ Quyidagi Telegram kanallarga obuna bo‘ling:",
+            "Iltimos, quyidagi Telegram kanallariga obuna bo‘ling:",
             reply_markup=keyboard
         )
         return False
@@ -235,9 +235,14 @@ async def contact_handler(message: Message):
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
         await message.answer(
-            "Endi Kick platformamizga obuna bo‘ling 👇",
-            reply_markup=keyboard
+            "<b>🎬 Endi Kick platformamizga obuna bo‘ling 👇</b>\n\n"
+            "⚠️ <b>Diqqat!</b> Agar siz Kick kanaliga obuna bo‘lmasangiz, <u>konkurslarda ishtirok eta olmaysiz</u> va "
+            "yangi imkoniyatlardan bebahra qolasiz.\n\n"
+            "✅ <b>Obuna bo‘ling va pastdagi tugma orqali tasdiqlang!</b>",
+            reply_markup=keyboard,
+            parse_mode="HTML"
         )
+
 
     else:
         # Agar hali Telegram kanallarga obuna bo‘lmagan bo‘lsa
