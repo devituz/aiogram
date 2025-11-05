@@ -30,13 +30,13 @@ from database import (
 )
 
 # 🔹 Bot sozlamalari
-TOKEN = "7810772768:AAG7yf11ErEOuMh1eFn1CMCjDHdL4QjxiM4"
+TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 
 ADMIN_IDS = [8091009811]
 
 
 CHANNELS = [
-    "@shohbozbekuz",
+    "@Vertual_Bola",
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
