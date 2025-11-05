@@ -769,16 +769,24 @@ async def statistika_handler(message: Message):
     else:
         for i, user in enumerate(accepted_users, 1):
             referrals_count = get_referred_count(user.telegram_id)
+            dbbet_line = (
+                f"   🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n"
+                if user.dbbet_id else
+                "   🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
+            )
+
             stats_message += (
                 f"{i}. 👤 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
                 f"   💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
                 f"   🆔 <b>Telegram ID:</b> {user.telegram_id}\n"
+                f"{dbbet_line}"
                 f"   📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
                 f"   📊 <b>Status:</b> {user.status.value}\n"
                 f"   🤝 <b>Taklif qilingan do‘stlar:</b> {referrals_count} ta\n\n"
             )
 
     await message.answer(stats_message, parse_mode="HTML")
+
 
 
 @dp.message(Command("user_info"))
