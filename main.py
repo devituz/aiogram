@@ -30,7 +30,7 @@ from database import (
 )
 
 # 🔹 Bot sozlamalari
-TOKEN = "8169521980:AAFCdGKpJjyvpehGGk8iqoKK-z7DpdLIxDw"
+TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 
 ADMIN_IDS = [8091009811]
 
