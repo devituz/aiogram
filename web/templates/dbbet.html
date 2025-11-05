@@ -61,7 +61,7 @@
   </div>
 
 <script>
-  // 🟢 Faqat ko‘rish uchun — dbbet_id lar
+
   const userMap = [
     {% for user in users %}
       { dbbet_id: "{{ user.dbbet_id }}" }{% if not loop.last %},{% endif %}

@@ -321,7 +321,7 @@ async def baraban_handler(message: Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(
             text="🎰 BARABANNI OCHISH",
-            web_app=types.WebAppInfo(url="https://winproline.ru/baraban/")
+            web_app=types.WebAppInfo(url="https://vertualbolabetkonkurs.winproline.ru/dbbet")
         )
     ]])
 
@@ -368,13 +368,12 @@ async def start_dbb_id(message: Message, state: FSMContext):
     )
     await state.set_state(DBBetStates.waiting_for_dbb_id)
 
-
 @dp.message(DBBetStates.waiting_for_dbb_id)
 async def receive_dbb_id(message: Message, state: FSMContext):
     txt = message.text.strip()
 
     if txt == "❌ Bekor qilish":
-        await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
+        await send_main_menu(message.chat.id)
         await state.clear()
         return
 
@@ -385,13 +384,20 @@ async def receive_dbb_id(message: Message, state: FSMContext):
     user = get_user_by_telegram_id(message.from_user.id)
     ref_cnt = get_referred_count(message.from_user.id)
 
+    # 🔹 Statusni chiroyli ko‘rsatish
+    status_map = {
+        "new": "🆕 Yangi foydalanuvchi",
+        "accept": "✅ Qabul qilingan",
+        "rejected": "❌ Rad etilgan"
+    }
+    user_status = status_map.get(user.status.value, "Noma’lum")
+
     caption = (
         f"<b>📩 Yangi DBBET ID</b>\n\n"
         f"👤 <b>Ism:</b> {message.from_user.full_name}\n"
         f"📱 <b>Telefon:</b> {user.phone_number}\n"
         f"🆔 <b>TG ID:</b> <code>{message.from_user.id}</code>\n"
-        # f"🤝 <b>Do‘stlari:</b> {ref_cnt} ta\n"
-        f"📊 <b>Status:</b> {user.status}\n"
+        f"📊 <b>Status:</b> {user_status}\n"
         f"🔢 <b>DBBET ID:</b> <code>{txt}</code>"
     )
 
@@ -414,8 +420,9 @@ async def receive_dbb_id(message: Message, state: FSMContext):
         "Javob kelguncha kutib turing...",
         reply_markup=ReplyKeyboardRemove()
     )
-    await send_main_menu(message.chat.id)   # ✅ To‘g‘ri: .chat.id
+    await send_main_menu(message.chat.id)
     await state.clear()
+
 
 @dp.callback_query(F.data.startswith("acc_"))
 async def accept(cb: CallbackQuery):
