@@ -611,6 +611,10 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
         return
 
     users = get_all_users()
+
+    users = [u for u in users if u.id in [1, 2, 3, 4, 5]]
+
+
     if not users:
         await message.answer("❌ Ma'lumotlar bazasida foydalanuvchilar topilmadi.")
         await state.clear()
