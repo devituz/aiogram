@@ -47,9 +47,7 @@ WEBAPP_PORT = 8443  # Internal port for webhook server
 bot = Bot(token=TOKEN)
 dp = Dispatcher(storage=MemoryStorage())  # FSM storage
 
-# YANGI: bitta router yaratamiz
-router = Router()
-dp.include_router(router)   # routerni dispatcherga qo‘shamiz
+
 
 # ==========================================================
 # 🔹 FSM holatlari
@@ -857,25 +855,10 @@ async def handle_webhook(request):
     await dp.feed_raw_update(bot=bot, update=update)
     return web.Response()
 
-async def on_startup(app):  # Added app parameter
-    print("🤖 Bot ishga tushdi...")
-    await bot.delete_webhook()
-    await bot.set_webhook(url=WEBHOOK_URL)
-    print(f"✅ Webhook set to {WEBHOOK_URL}")
 
-async def on_shutdown(app):  # Added app parameter
-    print("🤖 Bot to‘xtatilmoqda...")
-    await bot.delete_webhook()
-    await bot.session.close()
-
-# ==========================================================
-# 🔹 Main function for webhook
-# ==========================================================
 async def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
-    app.on_startup.append(on_startup)  # No parentheses, just the function reference
-    app.on_shutdown.append(on_shutdown)  # No parentheses, just the function reference
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -883,6 +866,7 @@ async def main():
     await site.start()
     print(f"🚀 Webhook server running at {WEBAPP_HOST}:{WEBAPP_PORT}")
 
+    # Doimiy kutish (server ish holatida tursin)
     await asyncio.Event().wait()
 
 if __name__ == "__main__":
