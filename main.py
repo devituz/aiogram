@@ -26,7 +26,8 @@ from database import (
     add_referral,
     update_referral_subscribed,
     get_referred_count,
-    update_user_status, update_user_dbb_id, get_user_by_dbb_id
+    update_user_status, update_user_dbb_id, get_user_by_dbb_id, set_user_sms_status, get_users_for_broadcast,
+    reset_all_sms
 )
 
 # 🔹 Bot sozlamalari
@@ -592,16 +593,22 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
 
     await state.clear()
 
+
 @dp.message(Command("broadcast"))
 async def broadcast_handler(message: types.Message, state: FSMContext):
     if message.from_user.id not in ADMIN_IDS:
         await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
+    # ✅ Broadcast boshlanishida barcha foydalanuvchilarning sms statusini 0 (False) qilamiz
+    reset_all_sms()
+    await message.answer("🔄 Barcha foydalanuvchilarning SMS statusi qayta tiklandi (False).")
+
     await message.answer(
-        "📢 Barcha foydalanuvchilarga yuboriladigan xabarni yuboring (matn, rasm, hujjat, video yoki audio):"
+        "📢 Endi yuboriladigan xabar barcha foydalanuvchilarga ketadi (matn, rasm, hujjat, video yoki audio)."
     )
     await state.set_state(AdminMessageState.waiting_for_broadcast)
+
 
 
 @dp.message(AdminMessageState.waiting_for_broadcast)
@@ -610,60 +617,64 @@ async def broadcast_message_handler(message: types.Message, state: FSMContext):
     if admin_id not in ADMIN_IDS:
         return
 
-    users = get_all_users()
+    users = get_users_for_broadcast()
     if not users:
-        await message.answer("❌ Ma'lumotlar bazasida foydalanuvchilar topilmadi.")
+        await message.answer("❌ Hali xabar olmagan foydalanuvchilar topilmadi.")
         await state.clear()
         return
 
     success_count = 0
     error_count = 0
-    await message.answer("📤 Xabar yuborish boshlandi...")
+    await message.answer(f"📤 {len(users)} ta foydalanuvchiga xabar yuborish boshlandi...")
 
     for user in users:
         try:
             if message.text:
                 await bot.send_message(
                     chat_id=user.telegram_id,
-                    text=f"📢 Admindan yangi xabar:\n\n{message.text}\n\nStatus: {user.status.value}"
+                    text=f"📢 Admindan yangi xabar:\n\n{message.text}"
                 )
             elif message.photo:
                 await bot.send_photo(
                     chat_id=user.telegram_id,
                     photo=message.photo[-1].file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Rasm'}\n\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Rasm'}"
                 )
             elif message.document:
                 await bot.send_document(
                     chat_id=user.telegram_id,
                     document=message.document.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Hujjat'}\n\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Hujjat'}"
                 )
             elif message.video:
                 await bot.send_video(
                     chat_id=user.telegram_id,
                     video=message.video.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Video'}\n\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Video'}"
                 )
             elif message.audio:
                 await bot.send_audio(
                     chat_id=user.telegram_id,
                     audio=message.audio.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Audio'}\n\nStatus: {user.status.value}"
+                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Audio'}"
                 )
             else:
                 continue
 
+            # ✅ Xabar yuborilgan userni sms=True qilamiz
+            set_user_sms_status(user.telegram_id, True)
+
             success_count += 1
             await asyncio.sleep(0.05)
+
         except Exception as e:
             error_count += 1
             print(f"❌ Xabar yuborishda xato (user {user.telegram_id}): {e}")
 
     await message.answer(
         f"📢 Xabar yuborish yakunlandi!\n"
-        f"✅ Muvaffaqiyatli: {success_count} ta foydalanuvchiga\n"
-        f"❌ Xato: {error_count} ta foydalanuvchiga"
+        f"✅ {success_count} ta foydalanuvchiga muvaffaqiyatli yuborildi\n"
+        f"❌ {error_count} ta foydalanuvchida xato"
     )
     await state.clear()
 
