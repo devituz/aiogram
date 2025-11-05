@@ -101,7 +101,28 @@ def index():
             'referrals_count': referrals_count
         })
 
-    return render_template('index.html', users=users_data)
+    return (render_template('index.html', users=users_data)
+
+@app.route('/dbbet'))
+def dbbet():
+    # Fetch accepted users
+    accepted_users = get_accepted_users()
+
+    # Prepare data for template
+    users_data = []
+    for user in accepted_users:
+        referrals_count = get_referred_count(user.telegram_id)
+        users_data.append({
+            'telegram_id': user.telegram_id,
+            'phone_number': user.phone_number or 'Yo‘q',
+            'username': f"@{user.username}" if user.username else 'Yo‘q',
+            'fullname': user.fullname or 'Yo‘q',
+            'dbbet_id': user.dbbet_id or 'Yo‘q',
+            'status': user.status.value,
+            'referrals_count': referrals_count
+        })
+
+    return render_template('dbbet.html', users=users_data)
 
 
 if __name__ == "__main__":
