@@ -4,7 +4,6 @@ from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 import enum
 
 
-
 # 🔹 Database setup
 DATABASE_URL = "sqlite:///database.db"
 Base = declarative_base()
@@ -29,7 +28,6 @@ class TelegramUser(Base):
     status = Column(Enum(UserStatus), default=UserStatus.new, nullable=False)
     dbbet_id = Column(Integer, nullable=True)
 
-    # 🔹 User tomonidan qilingan referrals
     referrals = relationship(
         "Referral",
         back_populates="referrer",
@@ -44,9 +42,8 @@ class Referral(Base):
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, ForeignKey("telegram_users.telegram_id"), nullable=False)
     referred_by_id = Column(Integer, ForeignKey("telegram_users.telegram_id"), nullable=False)
-    subscribed = Column(Boolean, default=False)  # ✅ Obuna bo‘lgan yoki yo‘qligini bildiradi
+    subscribed = Column(Boolean, default=False)
 
-    # 🔹 Referral qilgan user
     referrer = relationship(
         "TelegramUser",
         back_populates="referrals",
@@ -58,11 +55,12 @@ class Referral(Base):
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine)
 
+
 # 🔹 Flask app
 app = Flask(__name__)
 
 
-# 🔹 Referrallar soni (faqat subscribed=True bo‘lsa)
+# 🔹 Referrallar soni
 def get_referred_count(user_id):
     session = SessionLocal()
     count = session.query(Referral).filter(
@@ -84,10 +82,7 @@ def get_accepted_users():
 # 🔹 Index route
 @app.route('/bu-link-shunchaki-yashirin-shunga-uzun-qildim')
 def index():
-    # Fetch accepted users
     accepted_users = get_accepted_users()
-
-    # Prepare data for template
     users_data = []
     for user in accepted_users:
         referrals_count = get_referred_count(user.telegram_id)
@@ -101,14 +96,13 @@ def index():
             'referrals_count': referrals_count
         })
 
-    return (render_template('index.html', users=users_data)
+    return render_template('index.html', users=users_data)  # ✅ Qavs to‘g‘rilandi
 
-@app.route('/dbbet'))
+
+# 🔹 Faqat dbbet ko‘rinishi uchun sahifa
+@app.route('/dbbet')
 def dbbet():
-    # Fetch accepted users
     accepted_users = get_accepted_users()
-
-    # Prepare data for template
     users_data = []
     for user in accepted_users:
         referrals_count = get_referred_count(user.telegram_id)
