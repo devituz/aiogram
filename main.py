@@ -27,7 +27,6 @@ from database import (
     update_referral_subscribed,
     get_referred_count,
     update_user_status, update_user_dbb_id, get_user_by_dbb_id, set_user_sms_status, get_users_for_broadcast,
-    reset_all_sms
 )
 
 # 🔹 Bot sozlamalari
@@ -37,7 +36,7 @@ ADMIN_IDS = [8091009811]
 
 
 CHANNELS = [
-    "@Vertual_Bola",
+    "@shohbozbekuz",
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
