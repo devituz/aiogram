@@ -599,105 +599,6 @@ async def admin_send_message_handler(message: Message, state: FSMContext):
     await state.clear()
 
 
-@dp.message(Command("broadcast"))
-async def broadcast_handler(message: types.Message, state: FSMContext):
-    if message.from_user.id not in ADMIN_IDS:
-        await message.answer("❌ Sizda bu amalni bajarish huquqi yo‘q!")
-        return
-
-    # ✅ Broadcast boshlanishida barcha foydalanuvchilarning sms statusini 0 (False) qilamiz
-    reset_all_sms()
-    await message.answer("🔄 Barcha foydalanuvchilarning SMS statusi qayta tiklandi (False).")
-
-    await message.answer(
-        "📢 Endi yuboriladigan xabar barcha foydalanuvchilarga ketadi (matn, rasm, hujjat, video yoki audio)."
-    )
-    await state.set_state(AdminMessageState.waiting_for_broadcast)
-
-
-
-@dp.message(AdminMessageState.waiting_for_broadcast)
-async def broadcast_message_handler(message: types.Message, state: FSMContext):
-    admin_id = message.from_user.id
-    if admin_id not in ADMIN_IDS:
-        return
-
-    # 🔹 Faqat sms=False bo‘lgan foydalanuvchilarni olamiz
-    users = get_users_for_broadcast()
-    if not users:
-        await message.answer("❌ Hali xabar olmagan foydalanuvchilar topilmadi yoki xabar allaqachon yuborilgan.")
-        await state.clear()
-        return
-
-    success_count = 0
-    error_count = 0
-
-    await message.answer(f"📤 {len(users)} ta foydalanuvchiga xabar yuborish boshlandi...")
-
-    for user in users:
-        if success_count >= 1300:
-            await message.answer("Muvafaqiyatli")
-            break
-        try:
-            # 🔸 Xabar yuborilgan foydalanuvchilarni tashlab ketamiz
-            if user.sms:
-                continue
-
-            # 🔹 Xabar yuborish turlari
-            if message.text:
-                await bot.send_message(
-                    chat_id=user.telegram_id,
-                    text=f"📢 Admindan yangi xabar:\n\n{message.text}"
-                )
-            elif message.photo:
-                await bot.send_photo(
-                    chat_id=user.telegram_id,
-                    photo=message.photo[-1].file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Rasm'}"
-                )
-            elif message.document:
-                await bot.send_document(
-                    chat_id=user.telegram_id,
-                    document=message.document.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Hujjat'}"
-                )
-            elif message.video:
-                await bot.send_video(
-                    chat_id=user.telegram_id,
-                    video=message.video.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Video'}"
-                )
-            elif message.audio:
-                await bot.send_audio(
-                    chat_id=user.telegram_id,
-                    audio=message.audio.file_id,
-                    caption=f"📢 Admindan yangi xabar:\n\n{message.caption or 'Audio'}"
-                )
-            else:
-                continue
-
-            # ✅ Xabar yuborilgan userni sms=True qilamiz
-            set_user_sms_status(user.telegram_id, True)
-            success_count += 1
-
-            # 🕐 Spam blokdan saqlanish uchun
-            await asyncio.sleep(0.3)
-
-        except Exception as e:
-            error_count += 1
-            print(f"❌ Xabar yuborishda xato (user {user.telegram_id}): {e}")
-
-    await message.answer(
-        f"📢 Xabar yuborish yakunlandi!\n"
-        f"✅ {success_count} ta foydalanuvchiga yuborildi\n"
-        f"❌ {error_count} ta foydalanuvchida xato"
-    )
-
-    # 🔒 Broadcast tugagach, keyingi safar qayta yuborish bloklanadi
-    await state.clear()
-
-
-
 # ==== 2. BIR FOYDALANUVCHIGA XABAR YUBORISH ====
 @dp.message(Command("send_to_user"))
 async def send_to_user_handler(message: types.Message, state: FSMContext):
@@ -873,6 +774,9 @@ async def cancel_send(message: Message, state: FSMContext):
     await send_main_menu(message.chat.id)
     await state.clear()
 
+
+
+
 @dp.message()
 async def all_message_handler(message: Message):
     await check_user_requirements(message)
@@ -885,10 +789,25 @@ async def handle_webhook(request):
     await dp.feed_raw_update(bot=bot, update=update)
     return web.Response()
 
+async def on_startup(app):  # Added app parameter
+    print("🤖 Bot ishga tushdi...")
+    await bot.delete_webhook()
+    await bot.set_webhook(url=WEBHOOK_URL)
+    print(f"✅ Webhook set to {WEBHOOK_URL}")
 
+async def on_shutdown(app):  # Added app parameter
+    print("🤖 Bot to‘xtatilmoqda...")
+    await bot.delete_webhook()
+    await bot.session.close()
+
+# ==========================================================
+# 🔹 Main function for webhook
+# ==========================================================
 async def main():
     app = web.Application()
     app.router.add_post(WEBHOOK_PATH, handle_webhook)
+    app.on_startup.append(on_startup)  # No parentheses, just the function reference
+    app.on_shutdown.append(on_shutdown)  # No parentheses, just the function reference
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -896,7 +815,6 @@ async def main():
     await site.start()
     print(f"🚀 Webhook server running at {WEBAPP_HOST}:{WEBAPP_PORT}")
 
-    # Doimiy kutish (server ish holatida tursin)
     await asyncio.Event().wait()
 
 if __name__ == "__main__":
