@@ -36,7 +36,7 @@ ADMIN_IDS = [8091009811]
 
 
 CHANNELS = [
-    "@Vertual_Bola",
+    "@shohbozbekuz",
 ]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 WEBHOOK_PATH = "/webhook"  # Webhook endpoint
