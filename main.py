@@ -104,33 +104,43 @@ async def send_main_menu(chat_id: int):
 # 🔹 Foydalanuvchi talablarini tekshirish
 async def check_user_requirements(message: Message) -> bool:
     user_id = message.from_user.id
+    print(f"🔹 check_user_requirements chaqirildi: user_id={user_id}")
+
     user = get_user_by_telegram_id(user_id)
+    print(f"🔹 Foydalanuvchi ma'lumotlari: {user}")
 
     if not user:
+        print("🔹 Foydalanuvchi topilmadi, yangi foydalanuvchi qo‘shilmoqda")
         add_user(
             telegram_id=user_id,
             fullname=message.from_user.full_name,
             username=message.from_user.username
         )
         user = get_user_by_telegram_id(user_id)
+        print(f"🔹 Yangi foydalanuvchi qo‘shildi: {user}")
 
     # 🔸 Faqat Telegram kanallar uchun obuna tekshiruvi
     not_subscribed_channels = []
     telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
+    print(f"🔹 Tekshiriladigan kanallar: {telegram_channels}")
 
     for ch in telegram_channels:
         try:
             member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+            print(f"🔹 {ch}: member.status = {member.status}")
             if member.status not in ["member", "administrator", "creator"]:
+                print(f"❌ {ch} ga obuna emas")
                 not_subscribed_channels.append(ch)
+            else:
+                print(f"✅ {ch} ga obuna")
         except Exception as e:
-            print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
+            print(f"❌ {ch} tekshirishda xato: {e}")
             not_subscribed_channels.append(ch)
+
+    print(f"🔹 Obuna bo‘lmagan kanallar: {not_subscribed_channels}")
 
     if not_subscribed_channels:
         buttons = []
-
-        # 🔹 Telegram kanallari uchun tugmalar
         for ch in telegram_channels:
             buttons.append([
                 InlineKeyboardButton(
@@ -139,15 +149,14 @@ async def check_user_requirements(message: Message) -> bool:
                 )
             ])
 
-        # 🔹 Tekshirish tugmasi
         buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
-
         keyboard = InlineKeyboardMarkup(inline_keyboard=buttons)
 
         await message.answer(
             "Iltimos, quyidagi Telegram kanallariga obuna bo‘ling:",
             reply_markup=keyboard
         )
+        print("🔹 Obuna bo‘lmagan foydalanuvchi xabari yuborildi")
         return False
 
     # 🔸 Telefon raqami tekshiruvi
@@ -158,11 +167,14 @@ async def check_user_requirements(message: Message) -> bool:
             one_time_keyboard=True
         )
         await message.answer("📱 Iltimos, telefon raqamingizni yuboring:", reply_markup=keyboard)
+        print("🔹 Telefon raqami so‘raldi")
         return False
 
     # 🔸 Obuna bo‘lganini belgilaymiz
     update_referral_subscribed(telegram_id=user_id, status=True)
+    print("✅ Foydalanuvchi obuna va telefon tekshiruvidan o'tdi")
     return True
+
 
 
 
@@ -251,16 +263,28 @@ async def check_subscription(callback: CallbackQuery):
     user_id = callback.from_user.id
     chat_id = callback.message.chat.id
 
+    print(f"🔹 check_subscription chaqirildi: user_id={user_id}")
+
     # Telegram kanallari tekshiriladi
     not_subscribed = []
     telegram_channels = [ch for ch in CHANNELS if ch.startswith("@")]
+    print(f"🔹 Tekshiriladigan kanallar: {telegram_channels}")
+
     for ch in telegram_channels:
         try:
             member = await bot.get_chat_member(chat_id=ch, user_id=user_id)
+            print(f"🔹 {ch}: member.status = {member.status}")
+
             if member.status not in ["member", "administrator", "creator"]:
+                print(f"❌ {ch} ga obuna emas")
                 not_subscribed.append(ch)
-        except Exception:
+            else:
+                print(f"✅ {ch} ga obuna")
+        except Exception as e:
+            print(f"❌ {ch} tekshirishda xato: {e}")
             not_subscribed.append(ch)
+
+    print(f"🔹 Obuna bo‘lmagan kanallar: {not_subscribed}")
 
     # Agar Telegram kanaliga obuna bo'lmagan bo'lsa
     if not_subscribed:
@@ -282,10 +306,13 @@ async def check_subscription(callback: CallbackQuery):
             "⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!",
             reply_markup=keyboard
         )
+        print("🔹 Obuna bo‘lmagan foydalanuvchi xabari yuborildi")
         return
 
     # Telefon raqami tekshiruvi
     user = get_user_by_telegram_id(user_id)
+    print(f"🔹 Foydalanuvchi: {user}")
+
     if not user.phone_number:
         keyboard = ReplyKeyboardMarkup(
             keyboard=[[KeyboardButton(text="📞 Telefon raqamni yuborish", request_contact=True)]],
@@ -293,11 +320,14 @@ async def check_subscription(callback: CallbackQuery):
             one_time_keyboard=True
         )
         await callback.message.answer("📱 Telefon raqamingizni yuboring:", reply_markup=keyboard)
+        print("🔹 Telefon raqami so‘raldi")
         return
 
     # Foydalanuvchi obuna va telefon tekshiruvidan o'tgan bo'lsa
     update_referral_subscribed(telegram_id=user_id, status=True)
     await send_all_channel_posts(chat_id)
+    print("✅ Foydalanuvchi obuna va telefon tekshiruvidan o'tdi, postlar yuborildi")
+
 
 
 
