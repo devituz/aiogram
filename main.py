@@ -372,6 +372,10 @@ async def start_dbb_id(message: Message, state: FSMContext):
 
 @dp.message(DBBetStates.waiting_for_dbb_id)
 async def receive_dbb_id(message: Message, state: FSMContext):
+    if not message.text:
+        await message.answer("⚠️ Xato! Faqat DBBET ID raqam yuboring.")
+        return
+
     txt = message.text.strip()
 
     if txt == "❌ Bekor qilish":
@@ -380,7 +384,7 @@ async def receive_dbb_id(message: Message, state: FSMContext):
         return
 
     if not (txt.isdigit() and 1 <= len(txt) <= 14):
-        await message.answer("⚠️ Xato! Faqat 14 ta raqam yuboring.")
+        await message.answer("⚠️ Xato! Faqat DBBET ID raqam yuboring.")
         return
 
     user = get_user_by_telegram_id(message.from_user.id)
