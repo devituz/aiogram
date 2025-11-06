@@ -26,7 +26,7 @@ from database import (
     add_referral,
     update_referral_subscribed,
     get_referred_count,
-    update_user_status, update_user_dbb_id, get_user_by_dbb_id, set_user_sms_status, get_users_for_broadcast,
+    update_user_status, update_user_dbb_id, get_user_by_dbb_id,
 )
 
 # 🔹 Bot sozlamalari
@@ -72,25 +72,14 @@ async def is_subscribed(user_id: int) -> bool:
             except Exception as e:
                 print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
                 return False
-        # Web linklar uchun tekshirish qilinmaydi
     return True
 
-
-# ==========================================================
-# 🔹 Kanal postlarini yuborish
-# ==========================================================
 async def send_all_channel_posts(chat_id: int):
     try:
         for channel, post_ids in CHANNEL_POSTS.items():
             for post_id in post_ids:
                 await bot.forward_message(chat_id=chat_id, from_chat_id=channel, message_id=post_id)
                 await asyncio.sleep(0.3)
-
-        # await bot.send_message(
-        #     chat_id=chat_id,
-        #     text="📦 *Go Tashkent* ilovasi haqida ma’lumot!\n\n👇 Quyidagini sinab ko‘ring:",
-        #     parse_mode="Markdown"
-        # )
         await send_main_menu(chat_id)
     except Exception as e:
         print(f"❌ send_all_channel_posts xatosi: {e}")

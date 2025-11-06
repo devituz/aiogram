@@ -21,8 +21,6 @@ class TelegramUser(Base):
     username = Column(String, nullable=True)
     fullname = Column(String, nullable=True)
     status = Column(Enum(UserStatus), default=UserStatus.new, nullable=False)
-    sms = Column(Boolean, default=False, nullable=False)
-
     dbbet_id = Column(Integer, nullable=True)
 
 
@@ -101,37 +99,7 @@ def add_user(telegram_id, fullname, username, phone_number=None):
 
     session.close()
 
-def get_users_for_broadcast():
-    session = SessionLocal()
-    users = session.query(TelegramUser).filter(TelegramUser.sms == False).all()
-    session.close()
-    return users
 
-
-def set_user_sms_status(telegram_id: int, value: bool = True):
-    session = SessionLocal()
-    try:
-        user = session.query(TelegramUser).filter(TelegramUser.telegram_id == int(telegram_id)).first()
-        if user:
-            user.sms = value
-            session.add(user)
-            session.commit()
-        else:
-            print(f"⚠️ User topilmadi: {telegram_id}")
-    except Exception as e:
-        print(f"❌ set_user_sms_status xato: {e}")
-        session.rollback()
-    finally:
-        session.close()
-
-
-
-def reset_all_sms():
-    session = SessionLocal()
-    session.query(TelegramUser).update({TelegramUser.sms: False})
-    session.commit()
-    session.close()
-# 🔹 Referral qo‘shish
 def add_referral(telegram_id, referred_by_id):
     session = SessionLocal()
     existing = session.query(Referral).filter_by(telegram_id=telegram_id, referred_by_id=referred_by_id).first()

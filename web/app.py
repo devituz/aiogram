@@ -27,7 +27,6 @@ class TelegramUser(Base):
     fullname = Column(String, nullable=True)
     status = Column(Enum(UserStatus), default=UserStatus.new, nullable=False)
     dbbet_id = Column(Integer, nullable=True)
-    sms = Column(Boolean, default=False, nullable=False)
 
     referrals = relationship(
         "Referral",
