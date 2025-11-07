@@ -309,7 +309,7 @@ def receive_dbb_id(message):
 
 
 # ==========================================================
-# 🔹 Admin: Qabul / Rad etish
+# 🔹 Admin: Qabul / Rad etish tugadu
 # ==========================================================
 @bot.callback_query_handler(func=lambda call: call.data.startswith("acc_"))
 def accept(call):
