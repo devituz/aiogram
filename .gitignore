@@ -1,0 +1,12 @@
+# Python ignore rules
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.env
+.env.*
+.DS_Store
+.idea/
+.vscode/
