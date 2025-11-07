@@ -14,7 +14,7 @@ from database import (
     get_user_by_dbb_id,
 )
 
-# 🔹 Bot sozlamalari
+# Bot sozlamalari
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 bot = telebot.TeleBot(TOKEN)
 
@@ -23,13 +23,13 @@ ADMIN_IDS = [8091009811]
 CHANNELS = ["@Vertual_Bola"]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
 
-# 🔹 FSM o'rniga holat saqlash
+# FSM o'rniga holat saqlash
 user_states = {}
 user_data = {}
 
 
 # ==========================================================
-# 🔹 Obuna tekshirish
+# Obuna tekshirish
 # ==========================================================
 def is_subscribed(user_id):
     for ch in CHANNELS:
@@ -38,7 +38,7 @@ def is_subscribed(user_id):
             if member.status not in ["member", "administrator", "creator"]:
                 return False
         except Exception as e:
-            print(f"❌ Obuna tekshirishda xato ({ch}): {e}")
+            print(f"Obuna tekshirishda xato ({ch}): {e}")
             return False
     return True
 
@@ -51,20 +51,20 @@ def send_all_channel_posts(chat_id):
                 time.sleep(0.3)
         send_main_menu(chat_id)
     except Exception as e:
-        print(f"❌ send_all_channel_posts xatosi: {e}")
+        print(f"send_all_channel_posts xatosi: {e}")
 
 
 # ==========================================================
-# 🔹 Asosiy menyu
+# Asosiy menyu
 # ==========================================================
 def send_main_menu(chat_id):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    keyboard.add("🎰 Baraban", "✉️ DBBET ID yuborish")
-    bot.send_message(chat_id, "📋 Asosiy menyu:", reply_markup=keyboard)
+    keyboard.add("Baraban", "DBBET ID yuborish")
+    bot.send_message(chat_id, "Asosiy menyu:", reply_markup=keyboard)
 
 
 # ==========================================================
-# 🔹 Foydalanuvchi talablarini tekshirish
+# Foydalanuvchi talablarini tekshirish
 # ==========================================================
 def check_user_requirements(message):
     user_id = message.from_user.id
@@ -91,16 +91,16 @@ def check_user_requirements(message):
     if not_subscribed:
         markup = types.InlineKeyboardMarkup()
         for ch in CHANNELS:
-            markup.add(types.InlineKeyboardButton("✅ Obuna bo‘lish", url=f"https://t.me/{ch[1:]}"))
-        markup.add(types.InlineKeyboardButton("✅ Tekshirish", callback_data="check_sub"))
+            markup.add(types.InlineKeyboardButton("Obuna bo‘lish", url=f"https://t.me/{ch[1:]}"))
+        markup.add(types.InlineKeyboardButton("Tekshirish", callback_data="check_sub"))
         bot.send_message(message.chat.id, "Iltimos, quyidagi Telegram kanallariga obuna bo‘ling:", reply_markup=markup)
         return False
 
     # Telefon raqami
     if not user.phone_number:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(types.KeyboardButton("📞 Telefon raqamni yuborish", request_contact=True))
-        bot.send_message(message.chat.id, "📱 Iltimos, telefon raqamingizni yuboring:", reply_markup=markup)
+        markup.add(types.KeyboardButton("Telefon raqamni yuborish", request_contact=True))
+        bot.send_message(message.chat.id, "Iltimos, telefon raqamingizni yuboring:", reply_markup=markup)
         return False
 
     update_referral_subscribed(telegram_id=user_id, status=True)
@@ -108,7 +108,7 @@ def check_user_requirements(message):
 
 
 # ==========================================================
-# 🔹 /start
+# /start
 # ==========================================================
 @bot.message_handler(commands=['start'])
 def start_handler(message):
@@ -145,7 +145,7 @@ def shartlar_handler(message):
 
 
 # ==========================================================
-# 🔹 Kontakt (telefon)
+# Kontakt (telefon)
 # ==========================================================
 @bot.message_handler(content_types=['contact'])
 def contact_handler(message):
@@ -155,19 +155,19 @@ def contact_handler(message):
 
     if is_subscribed(user_id):
         update_referral_subscribed(telegram_id=user_id, status=True)
-        bot.send_message(message.chat.id, "✅ Telefon raqamingiz saqlandi!", reply_markup=types.ReplyKeyboardRemove())
+        bot.send_message(message.chat.id, "Telefon raqamingiz saqlandi!", reply_markup=types.ReplyKeyboardRemove())
 
         markup = types.InlineKeyboardMarkup()
-        markup.add(types.InlineKeyboardButton("🎯 Kickga obuna bo‘lish", url="https://kick.com/vertual-bola"))
-        markup.add(types.InlineKeyboardButton("📃 Qo'llanma", url="https://t.me/lalalallalar/14"))
-        markup.add(types.InlineKeyboardButton("➡️ Keyingisi", callback_data="continue_after_kick"))
+        markup.add(types.InlineKeyboardButton("Kickga obuna bo‘lish", url="https://kick.com/vertual-bola"))
+        markup.add(types.InlineKeyboardButton("Qo'llanma", url="https://t.me/lalalallalar/14"))
+        markup.add(types.InlineKeyboardButton("Keyingisi", callback_data="continue_after_kick"))
 
         bot.send_message(
             message.chat.id,
-            "<b>🎬 Endi Kick platformamizga obuna bo‘ling 👇</b>\n\n"
-            "⚠️ <b>Diqqat!</b> Agar siz Kick kanaliga obuna bo‘lmasangiz, <u>konkurslarda ishtirok eta olmaysiz</u> va "
+            "<b>Endi Kick platformamizga obuna bo‘ling</b>\n\n"
+            "<b>Diqqat!</b> Agar siz Kick kanaliga obuna bo‘lmasangiz, <u>konkurslarda ishtirok eta olmaysiz</u> va "
             "yangi imkoniyatlardan bebahra qolasiz.\n\n"
-            "✅ <b>Obuna bo‘ling va pastdagi tugma orqali tasdiqlang!</b>",
+            "<b>Obuna bo‘ling va pastdagi tugma orqali tasdiqlang!</b>",
             reply_markup=markup,
             parse_mode="HTML"
         )
@@ -176,17 +176,17 @@ def contact_handler(message):
 
 
 # ==========================================================
-# 🔹 Callback: Keyingisi
+# Callback: Keyingisi
 # ==========================================================
 @bot.callback_query_handler(func=lambda call: call.data == "continue_after_kick")
 def after_kick(call):
     bot.answer_callback_query(call.id)
-    bot.send_message(call.message.chat.id, "✅ Rahmat! Endi keyingi shartimiz quydagicha!")
+    bot.send_message(call.message.chat.id, "Rahmat! Endi keyingi shartimiz quydagicha!")
     send_all_channel_posts(call.message.chat.id)
 
 
 # ==========================================================
-# 🔹 Obuna tekshirish tugmasi
+# Obuna tekshirish tugmasi
 # ==========================================================
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def check_subscription(call):
@@ -197,17 +197,17 @@ def check_subscription(call):
     if not_subscribed:
         markup = types.InlineKeyboardMarkup()
         for ch in CHANNELS:
-            markup.add(types.InlineKeyboardButton("✅ Obuna bo‘lish", url=f"https://t.me/{ch[1:]}"))
-        markup.add(types.InlineKeyboardButton("✅ Tekshirish", callback_data="check_sub"))
-        bot.send_message(call.message.chat.id, "⚠️ Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!",
+            markup.add(types.InlineKeyboardButton("Obuna bo‘lish", url=f"https://t.me/{ch[1:]}"))
+        markup.add(types.InlineKeyboardButton("Tekshirish", callback_data="check_sub"))
+        bot.send_message(call.message.chat.id, "Hali quyidagi Telegram kanallarga obuna bo‘lmagansiz!",
                          reply_markup=markup)
         return
 
     user = get_user_by_telegram_id(user_id)
     if not user.phone_number:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(types.KeyboardButton("📞 Telefon raqamni yuborish", request_contact=True))
-        bot.send_message(call.message.chat.id, "📱 Telefon raqamingizni yuboring:", reply_markup=markup)
+        markup.add(types.KeyboardButton("Telefon raqamni yuborish", request_contact=True))
+        bot.send_message(call.message.chat.id, "Telefon raqamingizni yuboring:", reply_markup=markup)
         return
 
     update_referral_subscribed(telegram_id=user_id, status=True)
@@ -215,9 +215,9 @@ def check_subscription(call):
 
 
 # ==========================================================
-# 🔹 Baraban
+# Baraban
 # ==========================================================
-@bot.message_handler(func=lambda m: m.text == "🎰 Baraban")
+@bot.message_handler(func=lambda m: m.text == "Baraban")
 def baraban_handler(message):
     if not check_user_requirements(message):
         return
@@ -225,76 +225,76 @@ def baraban_handler(message):
     user = get_user_by_telegram_id(message.from_user.id)
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton(
-        "🎰 BARABANNI OCHISH",
+        "BARABANNI OCHISH",
         web_app=types.WebAppInfo(url="https://vertualbolabetkonkurs.winproline.ru/dbbet")
     ))
 
-    dbbet_line = f"🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
-    status = {"new": "🆕 <b>Yangi foydalanuvchi</b>", "accept": "✅ <b>O‘yinda ishtirokchisiz</b>"}.get(user.status.value,
-                                                                                                      "❌ <b>Rad etilgan</b>")
+    dbbet_line = f"DBBET ID: <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "DBBET ID: ID yuborilmagan\n"
+    status = {"new": "Yangi foydalanuvchi", "accept": "O‘yinda ishtirokchisiz"}.get(user.status.value,
+                                                                                                      "Rad etilgan")
 
     text = (
-        f"🎉 <b>Sizga omad!</b>\n\n"
-        f"👤 <b>Ism:</b> {user.fullname}\n"
+        f"<b>Sizga omad!</b>\n\n"
+        f"Ism: {user.fullname}\n"
         f"{dbbet_line}"
-        f"📞 <b>Telefon:</b> {user.phone_number}\n"
-        f"📊 <b>Status:</b> {status}\n\n"
-        f"🔥 Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
+        f"Telefon: {user.phone_number}\n"
+        f"Status: {status}\n\n"
+        f"Pastdagi tugmani bosing → baraban <u>Telegram ichida</u> ochiladi!"
     )
     bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=markup)
 
 
 # ==========================================================
-# 🔹 DBBET ID yuborish
+# DBBET ID yuborish
 # ==========================================================
-@bot.message_handler(func=lambda m: m.text == "✉️ DBBET ID yuborish")
+@bot.message_handler(func=lambda m: m.text == "DBBET ID yuborish")
 def start_dbb_id(message):
     if not check_user_requirements(message):
         return
     user = get_user_by_telegram_id(message.from_user.id)
     if user.status.value == "accept":
-        bot.send_message(message.chat.id, "⚠️ Siz allaqachon yuborgansiz!")
+        bot.send_message(message.chat.id, "Siz allaqachon yuborgansiz!")
         return
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("❌ Bekor qilish")
-    bot.send_message(message.chat.id, "🔢 DBBET ID yuboring:", reply_markup=markup)
+    markup.add("Bekor qilish")
+    bot.send_message(message.chat.id, "DBBET ID yuboring:", reply_markup=markup)
     user_states[message.from_user.id] = "waiting_dbb_id"
 
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id) == "waiting_dbb_id")
 def receive_dbb_id(message):
     user_id = message.from_user.id
-    if message.text == "❌ Bekor qilish":
+    if message.text == "Bekor qilish":
         send_main_menu(message.chat.id)
         user_states.pop(user_id, None)
         return
 
     txt = message.text.strip()
     if not (txt.isdigit() and 1 <= len(txt) <= 14):
-        bot.send_message(message.chat.id, "⚠️ Xato! Faqat DBBET ID raqam yuboring.")
+        bot.send_message(message.chat.id, "Xato! Faqat DBBET ID raqam yuboring.")
         return
 
     user = get_user_by_telegram_id(user_id)
     ref_cnt = get_referred_count(user_id)
-    status_map = {"new": "🆕 Yangi foydalanuvchi", "accept": "✅ Qabul qilingan", "rejected": "❌ Rad etilgan"}
+    status_map = {"new": "Yangi foydalanuvchi", "accept": "Qabul qilingan", "rejected": "Rad etilgan"}
     user_status = status_map.get(user.status.value, "Noma’lum")
 
     caption = (
-        f"<b>📩 Yangi DBBET ID</b>\n\n"
-        f"👤 <b>Ism:</b> {message.from_user.full_name}\n"
-        f"📱 <b>Telefon:</b> {user.phone_number}\n"
-        f"🆔 <b>TG ID:</b> <code>{user_id}</code>\n"
-        f"📊 <b>Status:</b> {user_status}\n"
-        f"🔢 <b>DBBET ID:</b> <code>{txt}</code>"
+        f"<b>Yangi DBBET ID</b>\n\n"
+        f"Ism: {message.from_user.full_name}\n"
+        f"Telefon: {user.phone_number}\n"
+        f"TG ID: <code>{user_id}</code>\n"
+        f"Status: {user_status}\n"
+        f"DBBET ID: <code>{txt}</code>"
     )
 
     kb = types.InlineKeyboardMarkup()
     kb.add(
-        types.InlineKeyboardButton("✅ Qabul qilish", callback_data=f"acc_{user_id}_{txt}"),
-        types.InlineKeyboardButton("❌ Rad etish", callback_data=f"rej_{user_id}_0")
+        types.InlineKeyboardButton("Qabul qilish", callback_data=f"acc_{user_id}_{txt}"),
+        types.InlineKeyboardButton("Rad etish", callback_data=f"rej_{user_id}_0")
     )
-    kb.add(types.InlineKeyboardButton("✉️ Xabar yuborish", callback_data=f"msg_{user_id}_0"))
+    kb.add(types.InlineKeyboardButton("Xabar yuborish", callback_data=f"msg_{user_id}_0"))
 
     for adm in ADMIN_IDS:
         try:
@@ -302,19 +302,19 @@ def receive_dbb_id(message):
         except Exception as e:
             print(f"Admin {adm} ga yuborishda xato: {e}")
 
-    bot.send_message(message.chat.id, "✅ ID muvaffaqiyatli adminlarga yuborildi!\nJavob kelguncha kutib turing...",
+    bot.send_message(message.chat.id, "ID muvaffaqiyatli adminlarga yuborildi!\nJavob kelguncha kutib turing...",
                      reply_markup=types.ReplyKeyboardRemove())
     send_main_menu(message.chat.id)
     user_states.pop(user_id, None)
 
 
 # ==========================================================
-# 🔹 Admin: Qabul / Rad etish
+# Admin: Qabul / Rad etish
 # ==========================================================
 @bot.callback_query_handler(func=lambda call: call.data.startswith("acc_"))
 def accept(call):
     if call.from_user.id not in ADMIN_IDS:
-        bot.answer_callback_query(call.id, "❌ Ruxsat yo‘q!", show_alert=True)
+        bot.answer_callback_query(call.id, "Ruxsat yo‘q!", show_alert=True)
         return
 
     parts = call.data.split("_")
@@ -324,25 +324,25 @@ def accept(call):
     update_user_status(user_id, "accept")
     update_user_dbb_id(user_id, int(dbb_id))
 
-    bot.answer_callback_query(call.id, "✅ Qabul qilindi")
+    bot.answer_callback_query(call.id, "Qabul qilindi")
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
-    bot.send_message(user_id, "🎉 So‘rovingiz qabul qilindi!\nSiz endi o‘yinda ishtirok etasiz!")
-    notify_other_admins(call, user_id, "✅ qabul qildi")
+    bot.send_message(user_id, "So‘rovingiz qabul qilindi!\nSiz endi o‘yinda ishtirok etasiz!")
+    notify_other_admins(call, user_id, "qabul qildi")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("rej_"))
 def reject(call):
     if call.from_user.id not in ADMIN_IDS:
-        bot.answer_callback_query(call.id, "❌ Ruxsat yo‘q!", show_alert=True)
+        bot.answer_callback_query(call.id, "Ruxsat yo‘q!", show_alert=True)
         return
 
     user_id = int(call.data.split("_")[1])
     update_user_status(user_id, "rejected")
 
-    bot.answer_callback_query(call.id, "❌ Rad etildi")
+    bot.answer_callback_query(call.id, "Rad etildi")
     bot.edit_message_reply_markup(call.message.chat.id, call.message.message_id, reply_markup=None)
-    bot.send_message(user_id, "❌ So‘rovingiz rad etildi.\nSabab: Noto‘g‘ri yoki takroriy ID.")
-    notify_other_admins(call, user_id, "❌ rad etdi")
+    bot.send_message(user_id, "So‘rovingiz rad etildi.\nSabab: Noto‘g‘ri yoki takroriy ID.")
+    notify_other_admins(call, user_id, "rad etdi")
 
 
 def notify_other_admins(call, user_id, action):
@@ -351,8 +351,8 @@ def notify_other_admins(call, user_id, action):
             try:
                 bot.send_message(
                     admin_id,
-                    f"ℹ️ <b>{call.from_user.full_name}</b> {action}\n"
-                    f"🆔 Foydalanuvchi: <code>{user_id}</code>",
+                    f"<b>{call.from_user.full_name}</b> {action}\n"
+                    f"Foydalanuvchi: <code>{user_id}</code>",
                     parse_mode="HTML"
                 )
             except:
@@ -360,32 +360,45 @@ def notify_other_admins(call, user_id, action):
 
 
 # ==========================================================
-# 🔹 Admin: Xabar yuborish
+# Admin: Xabar yuborish (tugma bosilganda)
 # ==========================================================
 @bot.callback_query_handler(func=lambda call: call.data.startswith("msg_"))
 def send_message_mode(call):
     if call.from_user.id not in ADMIN_IDS:
-        bot.answer_callback_query(call.id, "❌ Ruxsat yo‘q!", show_alert=True)
+        bot.answer_callback_query(call.id, "Ruxsat yo‘q!", show_alert=True)
         return
 
-    user_id = int(call.data.split("_")[1])
-    user_states[call.from_user.id] = f"admin_msg_{user_id}"
-    bot.send_message(call.message.chat.id, f"✉️ <b>Xabar yozing:</b>\n👤 Foydalanuvchi ID: <code>{user_id}</code>",
-                     parse_mode="HTML")
-    bot.answer_callback_query(call.id, "Xabar rejimi yoqildi")
+    parts = call.data.split("_")
+    if len(parts) < 2:
+        return
+    target_user_id = int(parts[1])
+
+    # Saqlash: admin_id → "admin_msg_{target_id}"
+    user_states[call.from_user.id] = f"admin_msg_{target_user_id}"
+
+    bot.send_message(
+        call.message.chat.id,
+        f"Xabar yuborish rejimi yoqildi\n\n"
+        f"Foydalanuvchi ID: <code>{target_user_id}</code>\n\n"
+        f"Xabarni yozing:",
+        parse_mode="HTML"
+    )
+    bot.answer_callback_query(call.id)
 
 
-@bot.message_handler(
-    func=lambda m: str(m.from_user.id) in [s.split("_")[2] for s in user_states.values() if s.startswith("admin_msg_")])
+# ==========================================================
+# Admin: Xabar yuborish (handler)
+# ==========================================================
+@bot.message_handler(func=lambda m: any(v.startswith(f"admin_msg_{m.from_user.id}") for v in user_states.values()))
 def admin_send_message_handler(message):
     if message.from_user.id not in ADMIN_IDS:
         return
 
-    state_key = f"admin_msg_{message.from_user.id}"
+    # Qaysi target uchun ekanligini topish
     target_user_id = None
-    for k, v in user_states.items():
-        if v == state_key:
-            target_user_id = int(k.split("_")[2])
+    for admin_id, state in user_states.items():
+        if state == f"admin_msg_{message.from_user.id}":
+            target_user_id = int(admin_id)
             break
 
     if not target_user_id:
@@ -393,64 +406,73 @@ def admin_send_message_handler(message):
 
     user = get_user_by_telegram_id(target_user_id)
     try:
+        status_text = {"new": "Yangi", "accept": "Qabul qilingan", "rejected": "Rad etilgan"}.get(
+            user.status.value, user.status.value
+        )
+
         if message.text:
-            bot.send_message(target_user_id,
-                             f"📩 <b>Admindan yangi xabar:</b>\n💬 <i>{message.text}</i>\n\n📌 <b>Holat:</b> {user.status.value}",
-                             parse_mode="HTML")
+            bot.send_message(
+                target_user_id,
+                f"Admindan xabar:\n\n{message.text}\n\nHolat: {status_text}"
+            )
         elif message.photo:
-            bot.send_photo(target_user_id, message.photo[-1].file_id,
-                           caption=f"🖼 <b>Admindan yangi rasm:</b>\n💬 <i>{message.caption or 'Rasm'}</i>\n\n📌 <b>Holat:</b> {user.status.value}",
-                           parse_mode="HTML")
+            bot.send_photo(
+                target_user_id, message.photo[-1].file_id,
+                caption=f"Admindan rasm:\n\n{message.caption or ''}\n\nHolat: {status_text}"
+            )
         elif message.document:
-            bot.send_document(target_user_id, message.document.file_id,
-                              caption=f"📄 <b>Admindan yangi hujjat:</b>\n💬 <i>{message.caption or 'Hujjat'}</i>\n\n📌 <b>Holat:</b> {user.status.value}",
-                              parse_mode="HTML")
+            bot.send_document(
+                target_user_id, message.document.file_id,
+                caption=f"Admindan hujjat:\n\n{message.caption or ''}\n\nHolat: {status_text}"
+            )
         elif message.video:
-            bot.send_video(target_user_id, message.video.file_id,
-                           caption=f"🎥 <b>Admindan yangi video:</b>\n💬 <i>{message.caption or 'Video'}</i>\n\n📌 <b>Holat:</b> {user.status.value}",
-                           parse_mode="HTML")
+            bot.send_video(
+                target_user_id, message.video.file_id,
+                caption=f"Admindan video:\n\n{message.caption or ''}\n\nHolat: {status_text}"
+            )
         elif message.audio:
-            bot.send_audio(target_user_id, message.audio.file_id,
-                           caption=f"🎵 <b>Admindan yangi audio:</b>\n💬 <i>{message.caption or 'Audio'}</i>\n\n📌 <b>Holat:</b> {user.status.value}",
-                           parse_mode="HTML")
+            bot.send_audio(
+                target_user_id, message.audio.file_id,
+                caption=f"Admindan audio:\n\n{message.caption or ''}\n\nHolat: {status_text}"
+            )
         else:
-            bot.send_message(message.chat.id, "❌ Yuborish uchun mos xabar turi topilmadi.")
+            bot.send_message(message.chat.id, "Xabar turi qo‘llab-quvvatlanmaydi.")
             return
 
-        bot.send_message(message.chat.id, "✅ Xabar foydalanuvchiga muvaffaqiyatli yuborildi!")
+        bot.send_message(message.chat.id, f"Xabar muvaffaqiyatli yuborildi! (ID: {target_user_id})")
     except Exception as e:
-        bot.send_message(message.chat.id, f"❌ Xabar yuborishda xato: {e}")
-
-    user_states.pop(message.from_user.id, None)
+        bot.send_message(message.chat.id, f"Xato: {e}")
+    finally:
+        user_states.pop(message.from_user.id, None)
 
 
 # ==========================================================
-# 🔹 Admin: /send_to_user
+# Admin: /send_to_user
 # ==========================================================
 @bot.message_handler(commands=['send_to_user'])
 def send_to_user_handler(message):
     if message.from_user.id not in ADMIN_IDS:
-        bot.send_message(message.chat.id, "❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        bot.send_message(message.chat.id, "Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
     args = message.text.split()
     if len(args) < 2:
         bot.send_message(message.chat.id,
-                         "⚠️ Iltimos, foydalanuvchi Telegram ID sini kiriting. Masalan: /send_to_user 123456789")
+                         "Iltimos, foydalanuvchi Telegram ID sini kiriting. Masalan: /send_to_user 123456789")
         return
 
     try:
         target_user_id = int(args[1])
         user = get_user_by_telegram_id(target_user_id)
         if not user:
-            bot.send_message(message.chat.id, "❌ Bunday Telegram ID bilan foydalanuvchi topilmadi.")
+            bot.send_message(message.chat.id, "Bunday Telegram ID bilan foydalanuvchi topilmadi.")
             return
     except:
-        bot.send_message(message.chat.id, "❌ Telegram ID raqam bo‘lishi kerak!")
+        bot.send_message(message.chat.id, "Telegram ID raqam bo‘lishi kerak!")
         return
 
     user_states[message.from_user.id] = f"single_msg_{target_user_id}"
-    bot.send_message(message.chat.id, f"✉️ Foydalanuvchiga ({target_user_id}) yuboriladigan xabarni yozing:")
+    bot.send_message(message.chat.id, f"Foydalanuvchiga ({target_user_id}) yuboriladigan xabarni yozing:")
 
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, "").startswith("single_msg_"))
@@ -463,37 +485,37 @@ def single_message_handler(message):
 
     try:
         if message.text:
-            bot.send_message(target_user_id, f"📬 Admindan xabar:\n\n{message.text}\n\nStatus: {user.status.value}")
+            bot.send_message(target_user_id, f"Admindan xabar:\n\n{message.text}\n\nStatus: {user.status.value}")
         elif message.photo:
             bot.send_photo(target_user_id, message.photo[-1].file_id,
-                           caption=f"📬 Admindan xabar:\n\n{message.caption or 'Rasm'}\n\nStatus: {user.status.value}")
+                           caption=f"Admindan xabar:\n\n{message.caption or 'Rasm'}\n\nStatus: {user.status.value}")
         elif message.document:
             bot.send_document(target_user_id, message.document.file_id,
-                              caption=f"📬 Admindan xabar:\n\n{message.caption or 'Hujjat'}\n\nStatus: {user.status.value}")
+                              caption=f"Admindan xabar:\n\n{message.caption or 'Hujjat'}\n\nStatus: {user.status.value}")
         elif message.video:
             bot.send_video(target_user_id, message.video.file_id,
-                           caption=f"📬 Admindan xabar:\n\n{message.caption or 'Video'}\n\nStatus: {user.status.value}")
+                           caption=f"Admindan xabar:\n\n{message.caption or 'Video'}\n\nStatus: {user.status.value}")
         elif message.audio:
             bot.send_audio(target_user_id, message.audio.file_id,
-                           caption=f"📬 Admindan xabar:\n\n{message.caption or 'Audio'}\n\nStatus: {user.status.value}")
+                           caption=f"Admindan xabar:\n\n{message.caption or 'Audio'}\n\nStatus: {user.status.value}")
         else:
-            bot.send_message(message.chat.id, "❌ Yuborish uchun mos xabar turi topilmadi.")
+            bot.send_message(message.chat.id, "Yuborish uchun mos xabar turi topilmadi.")
             return
 
-        bot.send_message(message.chat.id, f"✅ Xabar foydalanuvchiga ({target_user_id}) yuborildi!")
+        bot.send_message(message.chat.id, f"Xabar foydalanuvchiga ({target_user_id}) yuborildi!")
     except Exception as e:
-        bot.send_message(message.chat.id, f"❌ Xabar yuborishda xato: {e}")
+        bot.send_message(message.chat.id, f"Xabar yuborishda xato: {e}")
 
     user_states.pop(message.from_user.id, None)
 
 
 # ==========================================================
-# 🔹 Admin: /statistika
+# Admin: /statistika
 # ==========================================================
 @bot.message_handler(commands=['statistika'])
 def statistika_handler(message):
     if message.from_user.id not in ADMIN_IDS:
-        bot.send_message(message.chat.id, "❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        bot.send_message(message.chat.id, "Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
     users = get_all_users()
@@ -501,71 +523,71 @@ def statistika_handler(message):
     accepted_users = [u for u in users if u.status.value == "accept"]
 
     stats_message = (
-        f"📊 <b>Bot Statistikasi:</b>\n"
-        f"👥 <b>Jami foydalanuvchilar:</b> {total_users} ta\n"
-        f"✅ <b>Qabul qilingan foydalanuvchilar:</b> {len(accepted_users)} ta\n\n"
-        f"📋 <b>Qabul qilingan foydalanuvchilar ro‘yxati:</b>\n"
+        f"<b>Bot Statistikasi:</b>\n"
+        f"<b>Jami foydalanuvchilar:</b> {total_users} ta\n"
+        f"<b>Qabul qilingan foydalanuvchilar:</b> {len(accepted_users)} ta\n\n"
+        f"<b>Qabul qilingan foydalanuvchilar ro‘yxati:</b>\n"
     )
 
     if not accepted_users:
-        stats_message += "ℹ️ Hozircha qabul qilingan foydalanuvchilar yo‘q."
+        stats_message += "Hozircha qabul qilingan foydalanuvchilar yo‘q."
     else:
         for i, user in enumerate(accepted_users, 1):
-            dbbet_line = f"   🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "   🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
+            dbbet_line = f"   DBBET ID: <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "   DBBET ID: ID yuborilmagan\n"
             stats_message += (
-                f"{i}. 👤 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
-                f"   💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
-                f"   🆔 <b>Telegram ID:</b> {user.telegram_id}\n"
+                f"{i}. Ism: {user.fullname or 'Yo‘q'}\n"
+                f"   Username: @{user.username or 'Yo‘q'}\n"
+                f"   Telegram ID: {user.telegram_id}\n"
                 f"{dbbet_line}"
-                f"   📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
-                f"   📊 <b>Status:</b> {user.status.value}\n\n"
+                f"   Telefon: {user.phone_number or 'Yo‘q'}\n"
+                f"   Status: {user.status.value}\n\n"
             )
 
     bot.send_message(message.chat.id, stats_message, parse_mode="HTML")
 
 
 # ==========================================================
-# 🔹 Admin: /user_info
+# Admin: /user_info
 # ==========================================================
 @bot.message_handler(commands=['user_info'])
 def user_info_handler(message):
     if message.from_user.id not in ADMIN_IDS:
-        bot.send_message(message.chat.id, "❌ Sizda bu amalni bajarish huquqi yo‘q!")
+        bot.send_message(message.chat.id, "Sizda bu amalni bajarish huquqi yo‘q!")
         return
 
     args = message.text.split()
     if len(args) < 2:
-        bot.send_message(message.chat.id, "⚠️ Foydalanuvchi DBBET ID sini kiriting.\nMisol: /user_info 123456")
+        bot.send_message(message.chat.id, "Foydalanuvchi DBBET ID sini kiriting.\nMisol: /user_info 123456")
         return
 
     try:
         target_dbb_id = int(args[1])
     except:
-        bot.send_message(message.chat.id, "❌ DBBET ID faqat raqam bo‘lishi kerak!")
+        bot.send_message(message.chat.id, "DBBET ID faqat raqam bo‘lishi kerak!")
         return
 
     user = get_user_by_dbb_id(target_dbb_id)
     if not user:
-        bot.send_message(message.chat.id, "❌ Bunday foydalanuvchi bazada topilmadi.")
+        bot.send_message(message.chat.id, "Bunday foydalanuvchi bazada topilmadi.")
         return
 
     referred_count = get_referred_count(user.telegram_id)
     text = (
-        f"👤 <b>Foydalanuvchi ma’lumotlari:</b>\n"
+        f"<b>Foydalanuvchi ma’lumotlari:</b>\n"
         f"━━━━━━━━━━━━━━━\n"
-        f"🆔 <b>Telegram ID:</b> <code>{user.telegram_id}</code>\n"
-        f"👨‍💼 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
-        f"💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
-        f"📱 <b>Telefon:</b> {user.phone_number or 'Yo‘q'}\n"
-        f"📊 <b>Status:</b> {user.status.value}\n"
-        f"🔢 <b>DBBET ID:</b> <code>{user.dbbet_id or 'Yo‘q'}</code>\n"
-        f"🤝 <b>Taklif qilgan do‘stlar soni:</b> {referred_count}\n"
+        f"Telegram ID: <code>{user.telegram_id}</code>\n"
+        f"Ism: {user.fullname or 'Yo‘q'}\n"
+        f"Username: @{user.username or 'Yo‘q'}\n"
+        f"Telefon: {user.phone_number or 'Yo‘q'}\n"
+        f"Status: {user.status.value}\n"
+        f"DBBET ID: <code>{user.dbbet_id or 'Yo‘q'}</code>\n"
+        f"Taklif qilgan do‘stlar soni: {referred_count}\n"
     )
     bot.send_message(message.chat.id, text, parse_mode="HTML")
 
 
 # ==========================================================
-# 🔹 Barcha xabarlar
+# Barcha xabarlar
 # ==========================================================
 @bot.message_handler(func=lambda m: True)
 def all_message_handler(message):
@@ -573,8 +595,8 @@ def all_message_handler(message):
 
 
 # ==========================================================
-# 🔹 Botni ishga tushirish
+# Botni ishga tushirish
 # ==========================================================
 if __name__ == "__main__":
-    print("🤖 Bot ishga tushdi...")
+    print("Bot ishga tushdi...")
     bot.infinity_polling()
