@@ -244,6 +244,7 @@ def baraban_handler(message):
     bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=markup)
 
 
+
 # ==========================================================
 # 🔹 DBBET ID yuborish
 # ==========================================================
@@ -251,33 +252,48 @@ def baraban_handler(message):
 def start_dbb_id(message):
     if not check_user_requirements(message):
         return
+
     user = get_user_by_telegram_id(message.from_user.id)
     if user.status.value == "accept":
-        bot.send_message(message.chat.id, "⚠️ Siz allaqachon yuborgansiz!")
+        bot.send_message(message.chat.id, "⚠️ Siz allaqachon DBBET ID yuborgansiz!")
         return
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add("❌ Bekor qilish")
-    bot.send_message(message.chat.id, "🔢 DBBET ID yuboring:", reply_markup=markup)
+    bot.send_message(message.chat.id, "🔢 Iltimos, faqat raqamli DBBET ID yuboring:", reply_markup=markup)
     user_states[message.from_user.id] = "waiting_dbb_id"
 
 
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id) == "waiting_dbb_id")
 def receive_dbb_id(message):
     user_id = message.from_user.id
+
+    # Bekor qilish
     if message.text == "❌ Bekor qilish":
         send_main_menu(message.chat.id)
         user_states.pop(user_id, None)
         return
 
     txt = message.text.strip()
-    if not (txt.isdigit() and 1 <= len(txt) <= 14):
-        bot.send_message(message.chat.id, "⚠️ Xato! Faqat DBBET ID raqam yuboring.")
+
+    # ✅ Faqat raqamga ruxsat berish — har qanday belgini rad etadi
+    if not txt.isdigit():
+        bot.send_message(message.chat.id, "⚠️ Xato! Faqat raqamli DBBET ID yuboring (masalan: 123456).")
+        return
+
+    # ✅ Uzunlik cheklovi (1–14 oralig‘ida)
+    if not (1 <= len(txt) <= 14):
+        bot.send_message(message.chat.id, "⚠️ Xato! DBBET ID 1 dan 14 gacha raqam bo‘lishi kerak.")
         return
 
     user = get_user_by_telegram_id(user_id)
     ref_cnt = get_referred_count(user_id)
-    status_map = {"new": "🆕 Yangi foydalanuvchi", "accept": "✅ Qabul qilingan", "rejected": "❌ Rad etilgan"}
+
+    status_map = {
+        "new": "🆕 Yangi foydalanuvchi",
+        "accept": "✅ Qabul qilingan",
+        "rejected": "❌ Rad etilgan"
+    }
     user_status = status_map.get(user.status.value, "Noma’lum")
 
     caption = (
@@ -296,16 +312,22 @@ def receive_dbb_id(message):
     )
     kb.add(types.InlineKeyboardButton("✉️ Xabar yuborish", callback_data=f"msg_{user_id}_0"))
 
+    # 🔹 Barcha adminlarga yuborish
     for adm in ADMIN_IDS:
         try:
             bot.send_message(adm, caption, parse_mode="HTML", reply_markup=kb)
         except Exception as e:
-            print(f"Admin {adm} ga yuborishda xato: {e}")
+            print(f"⚠️ Admin {adm} ga yuborishda xato: {e}")
 
-    bot.send_message(message.chat.id, "✅ ID muvaffaqiyatli adminlarga yuborildi!\nJavob kelguncha kutib turing...",
-                     reply_markup=types.ReplyKeyboardRemove())
+    bot.send_message(
+        message.chat.id,
+        "✅ ID muvaffaqiyatli adminlarga yuborildi!\nJavob kelguncha kutib turing...",
+        reply_markup=types.ReplyKeyboardRemove()
+    )
+
     send_main_menu(message.chat.id)
     user_states.pop(user_id, None)
+
 
 
 # ==========================================================
