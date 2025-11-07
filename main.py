@@ -358,76 +358,101 @@ def notify_other_admins(call, user_id, action):
             except:
                 pass
 
-
 # Callback: admin -> xabar rejimi yoqish
 @bot.callback_query_handler(func=lambda call: call.data.startswith("msg_"))
 def send_message_mode(call):
+    print(f"[CALLBACK] Admin {call.from_user.id} tugma bosdi: {call.data}")  # ✅ log
+
     if call.from_user.id not in ADMIN_IDS:
+        print(f"[CALLBACK] ❌ Ruxsat yo‘q: {call.from_user.id}")
         bot.answer_callback_query(call.id, "❌ Ruxsat yo‘q!", show_alert=True)
         return
 
     try:
         user_id = int(call.data.split("_")[1])
-    except:
+        print(f"[CALLBACK] 🎯 Target foydalanuvchi ID: {user_id}")
+    except Exception as e:
+        print(f"[CALLBACK] ❌ Foydalanuvchi ID olishda xato: {e}")
         bot.answer_callback_query(call.id, "❌ Foydalanuvchi ID topilmadi!", show_alert=True)
         return
 
-    # Saqlaymiz: kalit — adminning telegram idsi, qiymat — admin_msg_<target_user_id>
+    # Saqlaymiz
     user_states[call.from_user.id] = f"admin_msg_{user_id}"
+    print(f"[CALLBACK] ✅ user_states yangilandi: {user_states}")
+
     bot.answer_callback_query(call.id, "Xabar rejimi yoqildi")
-    bot.send_message(call.message.chat.id, f"✉️ <b>Xabar yozing:</b>\n👤 Foydalanuvchi ID: <code>{user_id}</code>", parse_mode="HTML")
+    bot.send_message(call.message.chat.id,
+                     f"✉️ <b>Xabar yozing:</b>\n👤 Foydalanuvchi ID: <code>{user_id}</code>",
+                     parse_mode="HTML")
 
 
-# Handler: admin yozgan xabarni belgilangan foydalanuvchiga jo'natadi
+# Handler: admin yozgan xabarni foydalanuvchiga jo‘natish
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id, "").startswith("admin_msg_"))
 def admin_send_message_handler(message):
     admin_id = message.from_user.id
+    print(f"[ADMIN_SEND] Admin {admin_id} xabar yubordi")  # ✅ log
+
     if admin_id not in ADMIN_IDS:
-        return  # xavfsizlik
+        print(f"[ADMIN_SEND] ❌ Admin emas: {admin_id}")
+        return
 
     state_value = user_states.get(admin_id)
-    # state_value formati: "admin_msg_<target_user_id>"
+    print(f"[ADMIN_SEND] 🧠 state_value: {state_value}")
+
     try:
         target_user_id = int(state_value.split("_")[2])
+        print(f"[ADMIN_SEND] 🎯 Maqsad foydalanuvchi ID: {target_user_id}")
     except Exception as e:
-        # noto'g'ri state bo'lsa, tozalaymiz va xatolik xabar beramiz
+        print(f"[ADMIN_SEND] ❌ Target foydalanuvchini ajratishda xato: {e}")
         user_states.pop(admin_id, None)
         bot.send_message(admin_id, "❌ Xatolik: Jo'natish uchun maqsadli foydalanuvchi aniqlanmadi. Qayta urinib ko‘ring.")
         return
 
+    # Foydalanuvchini bazadan olish
     user = get_user_by_telegram_id(target_user_id)
+    print(f"[ADMIN_SEND] 🔍 get_user_by_telegram_id({target_user_id}) => {user}")
+
     try:
-        # turli media turlarini qo'llab-quvvatlash — sizning eski mantiqni saqlab qoldim
         if message.text:
-            bot.send_message(target_user_id,
-                             f"📩 <b>Admindan yangi xabar:</b>\n💬 <i>{message.text}</i>\n\n📌 <b>Holat:</b> {getattr(user, 'status').value if user and getattr(user, 'status', None) else 'Noma\'lum'}",
-                             parse_mode="HTML")
+            print(f"[ADMIN_SEND] 💬 Text yuborilmoqda: {message.text}")
+            bot.send_message(
+                target_user_id,
+                f"📩 <b>Admindan yangi xabar:</b>\n💬 <i>{message.text}</i>\n\n📌 <b>Holat:</b> {getattr(user, 'status').value if user and getattr(user, 'status', None) else 'Noma\'lum'}",
+                parse_mode="HTML"
+            )
         elif message.photo:
+            print(f"[ADMIN_SEND] 🖼 Photo yuborilmoqda...")
             bot.send_photo(target_user_id, message.photo[-1].file_id,
                            caption=f"🖼 <b>Admindan yangi rasm:</b>\n💬 <i>{message.caption or 'Rasm'}</i>",
                            parse_mode="HTML")
         elif message.document:
+            print(f"[ADMIN_SEND] 📄 Document yuborilmoqda...")
             bot.send_document(target_user_id, message.document.file_id,
                               caption=f"📄 <b>Admindan yangi hujjat:</b>\n💬 <i>{message.caption or 'Hujjat'}</i>",
                               parse_mode="HTML")
         elif message.video:
+            print(f"[ADMIN_SEND] 🎥 Video yuborilmoqda...")
             bot.send_video(target_user_id, message.video.file_id,
                            caption=f"🎥 <b>Admindan yangi video:</b>\n💬 <i>{message.caption or 'Video'}</i>",
                            parse_mode="HTML")
         elif message.audio:
+            print(f"[ADMIN_SEND] 🎵 Audio yuborilmoqda...")
             bot.send_audio(target_user_id, message.audio.file_id,
                            caption=f"🎵 <b>Admindan yangi audio:</b>\n💬 <i>{message.caption or 'Audio'}</i>",
                            parse_mode="HTML")
         else:
+            print(f"[ADMIN_SEND] ❌ Noma'lum xabar turi")
             bot.send_message(admin_id, "❌ Yuborish uchun mos xabar turi topilmadi.")
             return
 
         bot.send_message(admin_id, "✅ Xabar foydalanuvchiga muvaffaqiyatli yuborildi!")
+        print(f"[ADMIN_SEND] ✅ Xabar muvaffaqiyatli yuborildi")
     except Exception as e:
+        print(f"[ADMIN_SEND] ❌ Xabar yuborishda xato: {e}")
         bot.send_message(admin_id, f"❌ Xabar yuborishda xato: {e}")
 
-    # holatni tozalaymiz
     user_states.pop(admin_id, None)
+    print(f"[ADMIN_SEND] 🧹 user_states tozalandi: {user_states}")
 
 
 # ==========================================================
