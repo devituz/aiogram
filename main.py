@@ -244,7 +244,6 @@ def baraban_handler(message):
     bot.send_message(message.chat.id, text, parse_mode="HTML", reply_markup=markup)
 
 
-
 # ==========================================================
 # 🔹 DBBET ID yuborish
 # ==========================================================
@@ -260,32 +259,54 @@ def start_dbb_id(message):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add("❌ Bekor qilish")
-    bot.send_message(message.chat.id, "🔢 Iltimos, faqat raqamli DBBET ID yuboring:", reply_markup=markup)
+    bot.send_message(
+        message.chat.id,
+        "🔢 Iltimos, faqat raqamli DBBET ID yuboring:",
+        reply_markup=markup
+    )
     user_states[message.from_user.id] = "waiting_dbb_id"
 
 
+# ==========================================================
+# 🔹 DBBET ID qabul qilish (faqat raqamga ruxsat)
+# ==========================================================
 @bot.message_handler(func=lambda m: user_states.get(m.from_user.id) == "waiting_dbb_id")
 def receive_dbb_id(message):
     user_id = message.from_user.id
 
-    # Bekor qilish
+    # 🔸 Bekor qilish tugmasi
     if message.text == "❌ Bekor qilish":
         send_main_menu(message.chat.id)
         user_states.pop(user_id, None)
         return
 
+    # 🔸 Media yoki boshqa turdagi xabarlarni taqiqlash
+    if message.content_type != "text":
+        bot.send_message(
+            message.chat.id,
+            "⚠️ Faqat raqamli DBBET ID yuborish mumkin! Rasm, video yoki fayl yubormang."
+        )
+        return
+
     txt = message.text.strip()
 
-    # ✅ Faqat raqamga ruxsat berish — har qanday belgini rad etadi
+    # 🔸 Faqat raqam bo‘lishi kerak
     if not txt.isdigit():
-        bot.send_message(message.chat.id, "⚠️ Xato! Faqat raqamli DBBET ID yuboring (masalan: 123456).")
+        bot.send_message(
+            message.chat.id,
+            "⚠️ Xato! Faqat raqamli DBBET ID yuboring (masalan: 123456)."
+        )
         return
 
-    # ✅ Uzunlik cheklovi (1–14 oralig‘ida)
+    # 🔸 Uzunlik cheklovi
     if not (1 <= len(txt) <= 14):
-        bot.send_message(message.chat.id, "⚠️ Xato! DBBET ID 1 dan 14 gacha raqam bo‘lishi kerak.")
+        bot.send_message(
+            message.chat.id,
+            "⚠️ Xato! DBBET ID 1 dan 14 gacha raqam bo‘lishi kerak."
+        )
         return
 
+    # 🔹 Ma'lumotlarni bazadan olish
     user = get_user_by_telegram_id(user_id)
     ref_cnt = get_referred_count(user_id)
 
@@ -296,6 +317,7 @@ def receive_dbb_id(message):
     }
     user_status = status_map.get(user.status.value, "Noma’lum")
 
+    # 🔹 Adminlar uchun xabar
     caption = (
         f"<b>📩 Yangi DBBET ID</b>\n\n"
         f"👤 <b>Ism:</b> {message.from_user.full_name}\n"
@@ -319,15 +341,15 @@ def receive_dbb_id(message):
         except Exception as e:
             print(f"⚠️ Admin {adm} ga yuborishda xato: {e}")
 
+    # 🔹 Foydalanuvchiga javob
     bot.send_message(
         message.chat.id,
-        "✅ ID muvaffaqiyatli adminlarga yuborildi!\nJavob kelguncha kutib turing...",
+        "✅ ID muvaffaqiyatli adminlarga yuborildi!\n Javob kelguncha qayta DBBET ID yubormasdan kutib turing...",
         reply_markup=types.ReplyKeyboardRemove()
     )
 
     send_main_menu(message.chat.id)
     user_states.pop(user_id, None)
-
 
 
 # ==========================================================
