@@ -1,6 +1,7 @@
 import telebot
 from telebot import types
 import time
+import math
 from database import (
     add_user,
     get_user_by_telegram_id,
@@ -591,9 +592,6 @@ def single_message_handler(message):
     user_states.pop(message.from_user.id, None)
 
 
-# ==========================================================
-# 🔹 Admin: /statistika
-# ==========================================================
 @bot.message_handler(commands=['statistika'])
 def statistika_handler(message):
     if message.from_user.id not in ADMIN_IDS:
@@ -604,19 +602,38 @@ def statistika_handler(message):
     total_users = len(users)
     accepted_users = [u for u in users if u.status.value == "accept"]
 
-    stats_message = (
+    # Umumiy header (faqat umumiy statistikani o'zida saqlaydi)
+    base_header = (
         f"📊 <b>Bot Statistikasi:</b>\n"
         f"👥 <b>Jami foydalanuvchilar:</b> {total_users} ta\n"
         f"✅ <b>Qabul qilingan foydalanuvchilar:</b> {len(accepted_users)} ta\n\n"
-        f"📋 <b>Qabul qilingan foydalanuvchilar ro‘yxati:</b>\n"
     )
 
     if not accepted_users:
-        stats_message += "ℹ️ Hozircha qabul qilingan foydalanuvchilar yo‘q."
-    else:
-        for i, user in enumerate(accepted_users, 1):
-            dbbet_line = f"   🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n" if user.dbbet_id else "   🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
-            stats_message += (
+        bot.send_message(message.chat.id, base_header + "📋 <b>Qabul qilingan foydalanuvchilar ro‘yxati:</b>\nℹ️ Hozircha qabul qilingan foydalanuvchilar yo‘q.", parse_mode="HTML")
+        return
+
+    # Parametrlar
+    CHUNK_USERS = 20          # har qismda nechta user bo'ladi
+    MAX_LEN = 4000            # xavfsizlik uchun 4000 belgilik limit
+
+    total_parts = math.ceil(len(accepted_users) / CHUNK_USERS)
+
+    # Foydalanuvchilarni bo'lib yuborish
+    for part_index, start in enumerate(range(0, len(accepted_users), CHUNK_USERS), 1):
+        chunk_users = accepted_users[start:start + CHUNK_USERS]
+
+        # Har bir qism uchun kichik header
+        header = base_header + f"📋 <b>Qabul qilingan foydalanuvchilar ro‘yxati (qism {part_index}/{total_parts}):</b>\n\n"
+        current_text = header
+
+        for i, user in enumerate(chunk_users, start + 1):
+            dbbet_line = (
+                f"   🆔 <b>DBBET ID:</b> <code>{user.dbbet_id}</code>\n"
+                if user.dbbet_id else "   🆔 <b>DBBET ID:</b> ID yuborilmagan\n"
+            )
+
+            line = (
                 f"{i}. 👤 <b>Ism:</b> {user.fullname or 'Yo‘q'}\n"
                 f"   💬 <b>Username:</b> @{user.username or 'Yo‘q'}\n"
                 f"   🆔 <b>Telegram ID:</b> {user.telegram_id}\n"
@@ -625,7 +642,16 @@ def statistika_handler(message):
                 f"   📊 <b>Status:</b> {user.status.value}\n\n"
             )
 
-    bot.send_message(message.chat.id, stats_message, parse_mode="HTML")
+            # Agar hozirgi qismga yangi line sig'masa — yuborib, davom ettiramiz
+            if len(current_text) + len(line) > MAX_LEN:
+                bot.send_message(message.chat.id, current_text, parse_mode="HTML")
+                current_text = header  # header'ni qayta qo'yish (yoki bo'sh qilib qo'yish mumkin)
+
+            current_text += line
+
+        # Oxirgi qismni yuboramiz
+        if current_text.strip():
+            bot.send_message(message.chat.id, current_text, parse_mode="HTML")
 
 
 # ==========================================================
