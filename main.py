@@ -19,7 +19,7 @@ from database import (
 TOKEN = "7209776053:AAEP3H3By5RyIK4yArNBAOeTOfypMy2_-uI"
 bot = telebot.TeleBot(TOKEN)
 
-ADMIN_IDS = [8091009811]
+ADMIN_IDS = [7312906202, 6323360222]
 
 CHANNELS = ["@Vertual_Bola"]
 CHANNEL_POSTS = {"@lalalallalar": [12]}
